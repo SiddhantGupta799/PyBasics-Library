@@ -50,6 +50,10 @@ Special Python features in C++
 	  be used directly in an if statement to test presence of a value in its collection list.
 */
 /*
+A Special File Handling Class is also provided to handle basic File opening processes in 1-2 lines of code.
+Documentation in PyBasics.cpp
+*/
+/*
 Here in this Library there are three types of printers or outputstreams.
 1. Print()     // note the Capitalization, This prints Special List DataTypes along with 1D and 2D Arrays
 2. print()     // this can handle normal printings for different arguements.
@@ -63,6 +67,7 @@ Here in this Library there are three types of printers or outputstreams.
 #include <string>
 #include <cstring>
 #include <vector>
+#include <fstream>
 
 using namespace std;
 
@@ -96,15 +101,15 @@ These are just for fun preprocessors to make code more readable.
 
 use case: 
 
-				string = name;					// declarations aren't changed
-				int num;
-you typed:		say "What's your name? " done;
+		string = name;					// declarations aren't changed
+		int num;
+you typed:	say "What's your name? " done;
 or you typed:   say "What's your name? " wrap;
 or you typed:   ask "What's your name? " done;
 or you typed:   ask "What's your name? " wrap;
 equivalent to:  std::cout << "What's your name? " << std::endl;
 
-you typed:		listen name;
+you typed:	listen name;
 equivalent to:  std::cin >> name;
 
 you typed:      listen name also num;
@@ -114,6 +119,33 @@ you typed:      say "Hi! " with name done;
 equivalent to:  std::cout << "Hi! " << name << std::endl;
 */
 
+
+// =============================================== File Handler Class: =============================================== 
+// Instructions and documentaion in PyBasics.cpp
+	class File
+	{
+		fstream file;
+		string name;
+		char mode;
+		bool openSuccess;
+		void modeSwitcher(string, char);
+	public:
+		File() = default;
+		File(string name, char mode = 'o');
+
+		File(const File&);
+
+		void reset();
+		void open(string name);
+		File open(string name, char mode);
+		void close();
+		void showfile();
+		string readfile();
+		fstream &getFile() { return file; }
+		//void File::writefile();			// in making
+
+		~File();
+	};
 
 // =============================================== Functions: =============================================== 
 
@@ -186,11 +218,27 @@ Note: find() functions can be directly used if needed.
 
 or else the complex but (easy to use) effective functionaility is already implemented down below.
 */
+	
+	
+	bool find(string l, string r);			// Implementation in PyBasics.cpp
+	bool find(char const* l, string r);		// Implementation in PyBasics.cpp
+	bool find(char const* l, char const* r);	// Implementation in PyBasics.cpp
+	bool find(char l, char const* r);		// Implementation in PyBasics.cpp
 
 	// for 1D vectors
 	template <typename T, typename U>
 	bool find (T t, vector<U>& vec) {
 		for (U& i : vec) {
+			if (t == i) {
+				return true;
+			}
+		}return false;
+	}
+	
+	// for built-in functions that return a vector
+	template <typename T, typename U>
+	bool find(T t,const vector<U>& vec) {
+		for (const U& i : vec) {
 			if (t == i) {
 				return true;
 			}
@@ -226,6 +274,11 @@ or else the complex but (easy to use) effective functionaility is already implem
 	// func2
 	template<typename Lhs, typename Rhs>
 	bool operator>(const Obj_Container<Lhs, decltype(IN)>& obj, Rhs& rhs) {
+		return find(obj.__lhs, rhs);
+	}
+
+	template<typename Lhs, typename Rhs>
+	bool operator>(const Obj_Container<Lhs, decltype(IN)>& obj,const Rhs& rhs) {
 		return find(obj.__lhs, rhs);
 	}
 /*
@@ -529,11 +582,13 @@ ex: Print(arr,Py::Size(arr),"\t") // assume arr is a 2D Array of any default cpp
 	string Sort (string&& s);
 
 	// python type string manipulators
-	vector<char> List(string s);
-	vector<string> Split(string str, char separator = ' ');
+	vector<char> List(string s);							// converts a string into a vector of characters
+	vector<char> List(char const* str);		
+	vector<string> Split(string str, char separator = ' ');	// converts a string into vector of strings based on the separator provided 
+	vector<string> Split(char const* str, char separator);
 
 	// Cannot be used with map()
-	string Pad(string s,string ch = " ");  // adds padding to the string on the terminal positions
+	string Pad(string s,string ch = " ");					// adds padding to the string on the terminal positions
 	string Pad(char const* str, string ch = " ");
 	string Pad(char str, string ch = " ");
 
@@ -573,7 +628,7 @@ Note: These cannot modify the vector by-reference as implicit/explicit type tran
 		return temp;
 	}
 
-	// This overloaded copy of Map function Lets you Chain it with List()
+	// This overloaded copy of Map function Lets you Chain it with List(), Split() and Range()
 	template<typename T>
 	vector<string> Map(string(*f) (T),const vector<T>& vec) {
 		vector<string> temp;
@@ -638,8 +693,8 @@ These functions can convert a 1D Array or Vector to string.
 	template<typename T>
 	string toString(vector<T>& vec) {
 		string s = "<";
-		for (size_t i = 0; i < vec.size(); i++) {
-			s = s + Pad(Str(vec.at(i)));
+		for (T t : vec) {
+			s = s + Pad(Str(t));
 		}s = s + ">";
 		return s;
 	}
@@ -647,8 +702,8 @@ These functions can convert a 1D Array or Vector to string.
 	template<typename T>
 	string toString(const vector<T>& vec) {
 		string s = "<";
-		for (size_t i = 0; i < vec.size(); i++) {
-			s = s + Pad(Str(vec.at(i)));
+		for (T t : vec) {
+			s = s + Pad(Str(t));
 		}s = s + ">";
 		return s;
 	}
