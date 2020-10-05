@@ -1,5 +1,5 @@
 # PyBasicsLibrary
-This is a C++ based Library and uses the language to implement some of the basic Python Built-in functions.
+This is a C++ based Library and uses the it to implement some of the basic Python Built-in functions.
 
 Features (Funtions) :
 
@@ -46,10 +46,10 @@ These are defined using Macros:
 	* Aliased ">>"             as "also"
 	* Aliased "<<std::endl;"   as "done" and "wrap" while using them no semiclon is required
 
-This Library Also has a File Handler Class which:
+This Library Also has a File Handler Class:
 
 * This class is a wrapper class around the fstream library.
-* It handles the actual procedures of maintain a file basics like opening in a particualr mode.
+* It handles the actual procedures of maintain file basics like opening in a particular mode.
 * Closing when the task is done.
 
 * overlapping one file on another (if you open another file while a file is already open
@@ -59,7 +59,7 @@ This Library Also has a File Handler Class which:
 * supports momentary opening of files and their closing. if single line tasks needs to be performed
   like if you want to open a file and show its content in a for-loop. this can be achieved in a single line
 
-  ex:if iam having 4 testfiles only differed by ther no. as:
+  ex:If Iam having 4 testfiles, only differed by their no. as:
 		
 		testfile0.txt
 		testfile1.txt
@@ -91,7 +91,7 @@ Something Like this is made possible.
 	println (names[0] + " " + names[1] + " " + names[2] + " " + Str (3) + " " + cname);
 	Print(Range(-1, 9, 2), "\t");
 	Map(Reverse,names);  // assume names as an Array or Vector of strings
-	a in b (the python "in" operator to return a boolean value after testing presence of a in b)
+	a In b (the python "In" operator to returns a boolean value after testing presence of a in b)
 	print(s * 4); (python string multiplication feature)
 	An allrounder print function, though it has variants to Handle Different operations efficiently.
 
