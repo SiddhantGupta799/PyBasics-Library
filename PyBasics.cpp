@@ -17,6 +17,150 @@ This Library also provides some of the fun Macros (Strictly Optional to Use), to
 a bit of typing.
 */
 namespace Py {
+// =============================================== File Handler Class: =============================================== 
+// Implementation of File Handler Class
+/**
+This class is a wrapper class around the fstream library.
+it handles the actual procedures of maintain a file basics like opening in a particualr mode.
+closing when the task is done.
+
+* overlapping one file on another (if you open another file while a file is already open
+  the new one will not open, but this has been take care of in this class. It will close
+  the old file and open the new one. Note: it opens the new file in the mode of the previous file.)
+
+* supports momentary opening of files and their closing. if single line tasks needs to be performed
+  like if you want to open a file and show its content in a for-loop. this can be achieved in a sinle line
+
+  ex:
+	if iam having 4 testfiles only differed by there no. as:
+	testfile0.txt
+	testfile1.txt
+	testfile2.txt
+	testfile3.txt
+	a name you can create. or if you can make a vector of filenames.
+	you can access them as shown below:
+
+	File file;
+	for(int i = 0; i <= 3; i++){
+		file.open("testfile"+Str(i)+".txt",'r').showfile();
+	}
+
+	for (int i = 0; i <= 3; i++) {
+		File("testfile"+Str(i)+".txt",'r').showfile();
+	}
+	// all the basic procedures will be handled behind the scenes and you get to focus on important details.
+
+* even you can collect the data of all files in your data base in one go by using a vector<string> 
+  and load the files like the previous ex. and replace showfile() with readfile().
+*/
+	File::File(string name, char mode) : name{ name }, mode{ mode }
+	{
+		modeSwitcher(name, mode);
+	}
+
+	void File::modeSwitcher(string name, char mode) {
+		switch (mode) {
+		case 'r':
+			file.open(name, ios::in);
+			break;
+		case 'w':
+			file.open(name, ios::out);
+			break;
+		case 'o':
+			file.open(name, ios::in | ios::out);
+			break;
+		case 'b':
+			file.open(name, ios::out | ios::binary);
+			break;
+		case 'a':
+			file.open(name, ios::app);
+			break;
+		}
+
+		if (file) {
+			//say "file opened" wrap;
+			openSuccess = true;
+		}
+		else {
+			//say "error" wrap;
+			openSuccess = false;
+		}
+	}
+
+	void File::reset() {
+		file.clear();
+		file.seekg(0, ios::beg);
+	}
+
+	void File::showfile() {
+		reset();
+		string line;
+		if (openSuccess) {
+			while (getline(file, line)) {
+				say line wrap;
+			}
+		}
+		else {
+			cerr << "No such File or Directory" << endl;
+		}
+		reset();
+	}
+
+	string File::readfile() {
+		reset();
+		string line;
+		string data;
+		if (openSuccess) {
+			while (getline(file, line)) {
+				data += line;
+			}
+		}
+		reset();
+		return data;
+	}
+
+	File::File(const File& obj) : File(obj.name, obj.mode) {}
+
+	// opens the new file in the previous set mode
+	void File::open(string name) {
+		if (openSuccess) {
+			close();
+		}
+		modeSwitcher(name, this->mode);
+	}
+
+	// Opens a File for momentary operations.
+	// Returns the File so that it can be chained with readfile() or showfile()
+	File File::open(string name, char mode) {
+		return File(name, mode);
+	}
+	/*
+	This open function is made to do the task of reading or showing the whole file 
+	in a single line.
+	readfile() returns the string containing the file data
+	showfile() diplays the contents of the file.
+	*/
+
+	// in making
+	//void File::writefile(){}
+
+	void File::close() {
+		file.close();
+		openSuccess = false;
+	}
+
+
+	File :: ~File() {
+		if (openSuccess) {
+			//say "file closed" wrap;
+			file.close();
+		}
+	}
+
+
+// =============================================== Functions: =============================================== 
+
+
 // Their Implementations
 //#######################################################################################################################
 // Input
@@ -52,6 +196,29 @@ ex:
 		}
 		return newstr;
 	}
+
+//#######################################################################################################################
+// Find Functions for "In" operator to look for a string in string or a char const* in a string
+	bool find(string l, string r) {
+		if (r.find(l) <= r.size()) {
+			return true;
+		}return false;
+	}
+
+	bool find(char const* l, string r) {
+		if (r.find(l) <= r.size()) {
+			return true;
+		}return false;
+	}
+
+	bool find(char const* l, char const* r) {
+		return find(l,Str(r));
+	}
+
+	bool find(char l, char const* r) {
+		return find(Str(l), Str(r));
+	}
+
 //#######################################################################################################################
 // TypeCasters
 /*
@@ -73,8 +240,13 @@ ex: Int("456") = 456
 		return stoi ( s );
 	}
 
+	// This overload returns a integer if the character was an integer ex: '5' it will return 5
+	// if passed any other character it will implicitly return the integer or ascii value of charater
 	int Int(char ch) {
-		return stoi(Str(ch));
+		int num = ch - 48;
+		if((num) >= 0 && (num) <= 9)
+			return (num);
+		return ch;
 	}
 
 	int Int(double d) {
@@ -190,7 +362,7 @@ Note: it by default provides a vector of doubles, but it can be implicitly typec
 		vector <int> temp;
 
 		for (char ar : vec) {
-			temp.push_back((*f) (Str(ar)));
+			temp.push_back(Int(ar));
 		}
 
 		return temp;
@@ -297,6 +469,10 @@ Note: it by default provides a vector of doubles, but it can be implicitly typec
 		return Sort(s);
 	}
 
+	vector<string> Split(char const* str, char separator) {
+		return Split(Str(str),separator);
+	}
+
 	vector<string> Split(string str, char separator) {
 		str += ' ';
 		string temp;
@@ -315,10 +491,14 @@ Note: it by default provides a vector of doubles, but it can be implicitly typec
 		return vec;
 	}
 
+	vector<char> List(char const* str) {
+		return List(Str(str));
+	}
+
 	vector<char> List(string s) {
 		vector<char> chars;
-		for (size_t i = 0; i < s.size(); i++) {
-			chars.push_back(s[i]);
+		for (char ch : s) {
+			chars.push_back(ch);
 		}
 		return chars;
 	}
