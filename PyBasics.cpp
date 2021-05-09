@@ -1,4 +1,4 @@
-#include "PyBasics.hpp"
+#include "PyBasics.h"
 /*
 A Discriptive overview on PyBasics:
 
@@ -17,63 +17,37 @@ This Library also provides some of the fun Macros (Strictly Optional to Use), to
 a bit of typing.
 */
 namespace Py {
-// =============================================== File Handler Class: =============================================== 
-// Implementation of File Handler Class
-/**
-This class is a wrapper class around the fstream library.
-it handles the actual procedures of maintain a file basics like opening in a particualr mode.
-closing when the task is done.
-
-* overlapping one file on another (if you open another file while a file is already open
-  the new one will not open, but this has been take care of in this class. It will close
-  the old file and open the new one. Note: it opens the new file in the mode of the previous file.)
-
-* supports momentary opening of files and their closing. if single line tasks needs to be performed
-  like if you want to open a file and show its content in a for-loop. this can be achieved in a sinle line
-
-  ex:
-	if iam having 4 testfiles only differed by there no. as:
-	testfile0.txt
-	testfile1.txt
-	testfile2.txt
-	testfile3.txt
-	a name you can create. or if you can make a vector of filenames.
-	you can access them as shown below:
-
-	File file;
-	for(int i = 0; i <= 3; i++){
-		file.open("testfile"+Str(i)+".txt",'r').showfile();
-	}
-
-	for (int i = 0; i <= 3; i++) {
-		File("testfile"+Str(i)+".txt",'r').showfile();
-	}
-	// all the basic procedures will be handled behind the scenes and you get to focus on important details.
-
-* even you can collect the data of all files in your data base in one go by using a vector<string> 
-  and load the files like the previous ex. and replace showfile() with readfile().
-*/
-	File::File(string name, char mode) : name{ name }, mode{ mode }
+	// Implementation of File Handler Class
+	File::File(string name, File_Open_Modes mode) : name{ name }, mode{ mode }
 	{
 		modeSwitcher(name, mode);
 	}
 
-	void File::modeSwitcher(string name, char mode) {
+	void File::modeSwitcher(string name, File_Open_Modes mode) {
 		switch (mode) {
-		case 'r':
+
+		case READ:
 			file.open(name, ios::in);
 			break;
-		case 'w':
+
+		case WRITE:
 			file.open(name, ios::out);
 			break;
-		case 'o':
-			file.open(name, ios::in | ios::out);
+
+		case APPEND:
+			file.open(name, ios::app);
 			break;
-		case 'b':
+
+		case BINARY:
 			file.open(name, ios::out | ios::binary);
 			break;
-		case 'a':
-			file.open(name, ios::app);
+
+		case READ_AND_WRITE:
+			file.open(name, ios::in | ios::out);
+			break;
+
+		case READ_AND_APPEND:
+			file.open(name, ios::in | ios::app);
 			break;
 		}
 
@@ -87,13 +61,13 @@ closing when the task is done.
 		}
 	}
 
-	void File::reset() {
+	void File::reset_cursor() {
 		file.clear();
 		file.seekg(0, ios::beg);
 	}
 
 	void File::showfile() {
-		reset();
+		reset_cursor();
 		string line;
 		if (openSuccess) {
 			while (getline(file, line)) {
@@ -103,52 +77,54 @@ closing when the task is done.
 		else {
 			cerr << "No such File or Directory" << endl;
 		}
-		reset();
+		reset_cursor();
+	}
+
+	string File::readline() {
+		string line;
+		if (openSuccess and getline(file, line)) {
+			return line;
+		}
+		return eol;
+	}
+	
+	bool File::readline(string& line) {
+		if (openSuccess and getline(file, line)) {
+			return true;
+		}return false;
 	}
 
 	string File::readfile() {
-		reset();
+		reset_cursor();
 		string line;
 		string data;
 		if (openSuccess) {
 			while (getline(file, line)) {
 				data += line;
+				data += "\n";
 			}
 		}
-		reset();
+		reset_cursor();
 		return data;
 	}
 
 	File::File(const File& obj) : File(obj.name, obj.mode) {}
 
-	// opens the new file in the previous set mode
-	void File::open(string name) {
+	void File::open_new_file(string name, File_Open_Modes mode) {
 		if (openSuccess) {
 			close();
 		}
-		modeSwitcher(name, this->mode);
+		modeSwitcher(name,mode);
 	}
 
-	// Opens a File for momentary operations.
-	// Returns the File so that it can be chained with readfile() or showfile()
-	File File::open(string name, char mode) {
+	File File::open(string name, File_Open_Modes mode) {
 		return File(name, mode);
 	}
-	/*
-	This open function is made to do the task of reading or showing the whole file 
-	in a single line.
-	readfile() returns the string containing the file data
-	showfile() diplays the contents of the file.
-	*/
-
-	// in making
-	//void File::writefile(){}
 
 	void File::close() {
 		file.close();
 		openSuccess = false;
 	}
-
 
 	File :: ~File() {
 		if (openSuccess) {
@@ -157,37 +133,38 @@ closing when the task is done.
 		}
 	}
 
+	void File::help() {
+		cout << "help() is under making" << endl;
+	}
 
 // =============================================== Functions: =============================================== 
-
 
 // Their Implementations
 //#######################################################################################################################
 // Input
 /**
-Single Line Input function. Can be used hand in hand with the Typecasters,
-for Integer or Double Value inputs.
+	Single Line Input function. Can be used hand in hand with the Typecasters,
+	for Integer or Double Value inputs.
 
-ex: int i = Int(Input("Enter an Integer.: "));
-	double d = Double(Input("Enter a Float/Double.: "));
+	ex: int i = Int(Input("Enter an Integer.: "));
+		double d = Double(Input("Enter a Float/Double.: "));
 */
-
-	string Input ( string s ) {
-		say s ;
+	string Input(string s) {
+		say s;
 		cin.clear();
 		cin.sync();
-		getline ( cin, s );
+		getline(cin, s);
 		return s;
 	}
 
 //#######################################################################################################################
 // Python String multiplier.
 /*
-This operator works on l-values.
-ex:
-	string sym = " * ";
-	std::cout << (((sym * 4) + "\n") * 4) << std::endl;  // prints a 4x4 square
-	now sym can be used in this type of construct.
+	This operator works on l-values.
+	ex:
+		string sym = " * ";
+		std::cout << (((sym * 4) + "\n") * 4) << std::endl;  // prints a 4x4 square
+		now sym can be used in this type of construct.
 */
 	string operator* (std::string str, int times) {
 		string newstr;
@@ -212,32 +189,40 @@ ex:
 	}
 
 	bool find(char const* l, char const* r) {
-		return find(l,Str(r));
+		return find(l, Str(r));
 	}
 
-	bool find(char l, char const* r) {
-		return find(Str(l), Str(r));
+	bool find(char ch, char const* r) {
+		return find(Str(ch), Str(r));
 	}
 
 //#######################################################################################################################
 // TypeCasters
 /*
-This Double() and Int() functions Typecasts a valid string into the respective types.
+	This Double() and Int() functions Typecasts a valid string into the respective types.
 
-Note: Uses the Builtin Functions stod() and stoi() respectively
-ex: Int("456") = 456
-    Double("67") = 67.00
+	Note: Uses the Builtin Functions stod() and stoi() respectively
+	ex: Int("456") = 456
+		Double("67") = 67.00
 */
-	double Double ( string s ) {
-		return stod ( s );
+	double Double(string s) {
+		return stod(s);
 	}
 
 	double Double(char ch) {
 		return stod(Str(ch));
 	}
 
+	double Double(double d) {
+		return d;
+	}
+
 	int Int ( string s ) {
 		return stoi ( s );
+	}
+
+	int Int(int i) {
+		return i;
 	}
 
 	// This overload returns a integer if the character was an integer ex: '5' it will return 5
@@ -298,8 +283,8 @@ Note: it by default provides a vector of doubles, but it can be implicitly typec
 
 //#######################################################################################################################
 // Printer
-	namespace print_container {
-		std::ostream& Show(std::ostream& os) {
+	namespace ____internal_print____ {
+		std::ostream& ___show___(std::ostream& os) {
 			return os;
 		}
 	}
@@ -307,6 +292,11 @@ Note: it by default provides a vector of doubles, but it can be implicitly typec
 	void print() {
 		say "" wrap;
 	}
+
+	void print(const char* s) {
+		cout << s << endl;
+	}
+
 //#######################################################################################################################
 // Special DataTypes Printers, Note the Capitalization in calling
 // @brief Because of the templates creating a linker issue most of the printers are implemented in the .hpp file itself
@@ -315,27 +305,49 @@ Note: it by default provides a vector of doubles, but it can be implicitly typec
 //@brief This Overloaded function for handelling Printing of vector elements of string type
 	void Print (vector <string> &vec, string end ) {
 		for (const string& i : vec) {
-			say i with end;
+			say i << end;
 		} say "" done;
 	}
+
 //@brief This Overloaded function for handelling Printing of vector elements of string type
-	void Print (vector <int> &vec, string end ) {
+	void Print (vector<int>& vec, string end ) {
 		for (const int& i : vec ) {
-			say i with end;
+			say i << end;
+		} say "" done;
+	}
+
+
+//@brief This Overloaded function for handelling Printing of Array elements of string type
+	void Print(Array<string>& arr, string end) {
+		for (int i = 0; i < arr.size(); i++) {
+			say arr[i] << end;
+		} say "" done;
+	}
+
+//@brief This Overloaded function for handelling Printing of Array elements of string type
+	void Print(Array <int>& arr, string end) {
+		for (int i = 0; i < arr.size(); i++) {
+			say arr[i] << end;
 		} say "" done;
 	}
 
 //#######################################################################################################################
 // This the map function just like Python
-// also works like that but on vectors
+// also works like that but on vectors and Array Class objects
 // the Upper, Lower, Capitalize and Reverse function are acceptable by this one
 // to extend capabilities the Int, Double and Str are also applicable with this function.
 // for extended mappings (Int, Double and Str) the Map functions returns a vector after applying the changes
-// MapArray function is specifically for the string Arrays Mapping and doesn't extend capabilities for different types of Arrays
-	void Map (string (*f) (string&), vector <string> &vec) {
+// MapArray function is specifically for the string Arrays Mapping and doesn't extend capabilities for different types of Raw - Arrays
+	vector<string> Map (string (*f) (string&), vector<string>&vec) {
 		for (string & ar : vec ) {
 			ar = (*f) (ar);
 		}
+		return vec;
+	}
+
+	vector<string> Map(string(*f) (string&), const vector <string>& vec) {
+		vector<string> v = vec;
+		return Map(*f,v);
 	}
 
 	vector<int> Map (int (*f) (string), vector <string> &vec) {
@@ -349,13 +361,8 @@ Note: it by default provides a vector of doubles, but it can be implicitly typec
 	}
 
 	vector<int> Map(int (*f) (string),const vector <string>& vec) {
-		vector <int> temp;
-
-		for (string ar : vec) {
-			temp.push_back((*f) (ar));
-		}
-
-		return temp;
+		vector <string> v = vec ;
+		return Map(*f,v);
 	}
 
 	vector<int> Map(int (*f) (string), const vector <char>& vec) {
@@ -368,7 +375,7 @@ Note: it by default provides a vector of doubles, but it can be implicitly typec
 		return temp;
 	}
 
-	vector<double> Map (double (*f) (string), vector <string> &vec) {
+	vector<double> Map (double (*f) (string), vector <string>& vec) {
 		vector <double> temp;
 
 		for (string ar : vec) {
@@ -377,7 +384,7 @@ Note: it by default provides a vector of doubles, but it can be implicitly typec
 
 		return temp;
 	}
-
+	
 	vector<double> Map(double (*f) (string),const vector <string>& vec) {
 		vector <double> temp;
 
@@ -397,11 +404,291 @@ Note: it by default provides a vector of doubles, but it can be implicitly typec
 
 		return temp;
 	}
+//#######################################################################################################################
+
+	Array<string> Map(string (function)(string&), Array<string>& arr) {
+		for (size_t i = 0; i < Len(arr); i++) {
+			function(arr[i]);
+		}
+		return arr;
+	}
+	
+	Array<string> Map(string (function)(string&),const Array<string>& arr) {
+		Array<string> ar = arr;
+		return Map(function,ar);
+	}
+
+	Array<int> Map(int (function)(string), Array<string>& arr) {
+		Array<int> intArr;
+		for (size_t i = 0; i < Len(arr); i++) {
+			intArr.append((function)(arr[i]));
+		}
+		return intArr;
+	}
+
+	Array<int> Map(int(function) (string),const Array<string>& arr) {
+		Array<string> ar = arr;
+		return Map(function, ar);
+	}
+
+	Array<double> Map(double(function) (string), Array<string>& arr) {
+		Array<double> intArr;
+		for (size_t i = 0; i < Len(arr); i++) {
+			intArr.append((function)(arr[i]));
+		}
+		return intArr;
+	}
+
+	Array<double> Map(double(function) (string),const Array<string>& arr) {
+		Array<string> ar = arr;
+		return Map(function, ar);
+	}
+
+	Array<double> Map(double(function)(double), Array<double>& arr) {
+		for (double& d : arr) {
+			d = function(d);
+		}
+		return arr;
+	}
+
+	Array<double> Map(double(function)(double), const Array<double>& arr) {
+		Array<double> ar = arr;
+		return Map(function, ar);
+	}
+
+	Array<long double> Map(long double(function)(long double), Array<long double>& arr) {
+		for (long double& d : arr) {
+			d = function(d);
+		}
+		return arr;
+	}
+
+	Array<long double> Map(long double(function)(long double), const Array<long double>& arr) {
+		Array<long double> ar = arr;
+		return Map(function,ar);
+	}
 
 //#######################################################################################################################
 // String Manipulation functions
 
-	// l-value optimization
+//#######################################################################################################################
+	// helper functions for ReformatText()
+	void __swap(char& a, char& b) {
+		char temp = a;
+		a = b;
+		b = temp;
+	}
+
+	// Helper Functions for ReformatText
+	void __the_ones_that_are_followed_by_a_space(
+		deque<char>& s,     // the deque that gets edited
+		size_t i,           // index of editing
+		char prvious_char,  // character preceding the position
+		char next_char)     // character succeeding the position
+	{
+		/*
+		This one rectifies the improper placing of
+		'.' = period
+		',' = comma
+		':' = colon
+		')' = closing parenthesis
+		']' = closing square brackets
+		'}' = closing curly braces
+		';' = semi colon
+		'?' = question mark
+		*/
+		// correct for of the above entities -> '<word><entity> <word>'
+		// example: ... important, how ...
+		//          -------------^ here it is
+
+		if (prvious_char == ' ' and next_char == ' ') {
+			// case: 'important , to'
+			s.erase(s.begin() + i - 1, s.begin() + i);  // deletes the unnecessary space
+		}
+		else if (prvious_char == ' ' and next_char != ' ') {
+			// case: 'important ,to' 
+			__swap(s[i - 1], s[i]);   // swaps the places
+		}
+		else {
+			// case: 'important,to' 
+			s.insert(s.begin() + i, ' ');   // will be good to insert a space after comma
+		}
+	}
+
+	// yet another helper
+	void __the_ones_that_are_preceded_by_a_space(
+		deque<char>& s,     // the deque that gets edited
+		size_t i,           // index of editing
+		char prvious_char,  // character preceding the position
+		char next_char)     // character succeeding the position
+	{
+		/*
+		This one rectifies the improper placing of
+		'(' = opening paranethesis
+		'[' = opening square brackets
+		'{' = opening curly braces
+		*/
+		// correct for of the above entities -> '<word> <entity><word>'
+		// example: ... important (how ...
+		//          --------------^ here it is
+		if (prvious_char != ' ' and next_char == ' ') {
+			// case: 'see( '
+			__swap(s[i], s[i + 1]);
+		}
+		else if (prvious_char != ' ' and next_char != ' ') {
+			// case: 'see('
+			s.insert(s.begin() + i, ' ');   //  will be good to insert a space before opening parenthesis
+		}
+		else if (prvious_char == ' ' and next_char == ' ') {
+			// case: 'see ( '
+			s.erase(s.begin() + i + 1, s.begin() + i + 2);
+		}
+	}
+
+	void __the_ones_that_need_padding(
+		deque<char>& s,     // the deque that gets edited
+		size_t i,           // index of editing
+		char pch,  // character preceding the position
+		char fch)     // character succeeding the position 
+	{
+		/*
+		This one rectifies the improper placing of
+		'+' = Addition
+		'-' = Subtraction
+		'*' = Multiplication
+		'/' = Divison
+		'=' = Equals
+		*/
+		// correct for of the above entities -> '<word> <entity> <word>'
+		// example: ... 3 + 4 ...
+		//          ------^ here it is
+		// but if its quoted like this -> '+' any improper spacings will be removed
+		char ppch = s[i - 2], ffch = s[i + 2];
+
+		if (ppch != ' ' and pch == ' ' and fch == ' ' and ffch != ' ') {
+			// case: 3 + 4 -> 3 + 4 
+			// no change
+		}
+		else if (pch != ' ' and fch == ' ' and ffch != ' ') {
+			// case: 3+ 4 -> 3 + 4 
+			s.insert(s.begin() + i, ' ');
+		}
+		else if (pch == ' ' and fch != ' ') {
+			// case: 3 +4 -> 3 + 4 
+			s.insert(s.begin() + i + 1, ' ');
+		}
+		else if (pch != ' ' and fch != ' ') {
+			// case: 3+4 -> 3 + 4
+			s.insert(s.begin() + i, ' ');
+			s.insert(s.begin() + i + 2, ' ');
+		}
+	}
+
+	int single_quote_count = 0;		// for the __i_handle_quotes()
+	int double_quote_count = 0;		// for the __i_handle_quotes()
+
+	void __i_handle_quotes(
+		deque<char>& s,     // the deque that gets edited
+		size_t& i,				// index of editing
+		char pch,			// character preceding the position
+		char fch)			// character succeeding the position
+	{
+		// recognizing which quote we are working with
+		char ch = s[i];
+		int quote_count = 8;
+		if (ch == '\'') {
+			// single quote
+			// cout << "single quote encountered with status: " << single_quote_count << endl;
+			if (single_quote_count == 0) {
+				single_quote_count = 1;
+				quote_count = 0;	// opening quote
+			}
+			else {
+				single_quote_count = 0;
+				quote_count = 1;	// closing quote
+			}
+		}
+		else if (ch == '"') {
+			// double quote
+			// cout << "double quote encountered with status: " << double_quote_count << endl;
+			if (double_quote_count == 0) {
+				double_quote_count = 1;
+				quote_count = 0;
+			}
+			else {
+				double_quote_count = 0;
+				quote_count = 1;
+			}
+		}
+
+		if (quote_count == 0) {
+			/* encountered opening quote */
+			if (pch == ' ' and fch != ' ') {
+				// case: framed "response -> framed "response
+				// needs no change
+				i++;
+			}
+			else if ((pch == '(' or pch == '[' or pch == '{') and fch != ' ') {
+				// case: framed ("response -> framed ("response
+				// because by now the bracket has been handled
+				// needs no change
+				i++;
+			}
+			else if ((pch == '(' or pch == '[' or pch == '{') and fch == ' ') {
+				// case: framed ( "response -> framed ("response
+				s.erase(s.begin() + i + 1, s.begin() + i + 2);
+				i++;
+			}
+			else if (pch != ' ' and fch == ' ') {
+				// case: framed" response -> framed "response
+				__swap(s[i], s[i + 1]);
+				i += 2;
+				// since the next char will be a double inverted quote, and to prevent 
+				// the code from assumming that, as if it had found the closing quote we 
+				// make it flip 2 elements
+			}
+			else if (pch != ' ' and fch != ' ') {
+				// case: framed"response -> framed "response
+				s.insert(s.begin() + i, ' ');
+				i += 2;
+				// same reason as above
+			}
+			else {
+				// case: framed " response -> framed "response
+				s.erase(s.begin() + i + 1, s.begin() + i + 2);
+				i++;
+			}
+		}
+		else if (quote_count == 1) {
+			/* encountered closing quote */
+			if (pch == ' ' and fch != ' ') {
+				// case: crane "trend -> crane" trend
+				__swap(s[i - 1], s[i]);
+			}
+			else if (pch != ' ' and (fch == ')' or fch == ']' or fch == '}')) {
+				// case: crane")trend -> crane")trend
+				// the bracket will be handled afterwards
+				// needs no change
+			}
+			else if (pch != ' ' and fch == ' ') {
+				// case: crane" trend -> crane" trend
+				// needs no change
+			}
+			else if (pch != ' ' and fch != ' ') {
+				// case: crane"trend -> crane" trend
+				s.insert(s.begin() + i + 1, ' ');
+			}
+			else {
+				// case: crane " trend -> crane" trend
+				s.erase(s.begin() + i - 1, s.begin() + i);
+			}
+			i++;
+		}
+	}
+	// End of Helper Functions
+//#######################################################################################################################
+// Actual String Manipulation Tools
+// l-value optimization
 	string Upper (string &s) {
 		for (size_t i = 0; i < s.size(); i++) {
 			s[i] = std::toupper (s[i]);
@@ -418,35 +705,287 @@ Note: it by default provides a vector of doubles, but it can be implicitly typec
 		return s;
 	}
 
-	string Capitalize (string &s) {
-		s[0] = std::toupper (s[0]);
+	string Capitalize (string& s) {
+		Lower(s);
+		s[0] = std::toupper(s[0]);
+		return s;
+	}
+
+	string HapHazard(string& s) {
+		int size = s.size();
+		Lower(s);
+		srand((size_t)time(0));
+		int id = 0;
+		int len = rand() % 200;
+		for (int i = 0; i < len; i++) {
+			id = (rand() % size);
+
+			id % 2 == 0 ? s[id] = toupper(s[id]) : s[id] = tolower(s[id]);
+		}
 		return s;
 	}
 
 	string Reverse (string &s) {
-		char temp;
 		size_t f = s.size();
 
 		for (size_t i = 0; i < f / 2; i++) {
-			temp = s[i];
-			s[i] = s[f - i - 1];
-			s[f - i - 1] = temp;
+			Swap(s[i], s[f - i - 1]);
 		}
 
 		return s;
 	}
 
 	string Sort(string& s) {
-		for (size_t i = 0; i < s.size(); i++) {
-			for (size_t j = 0; j < s.size() - 1; j++) {
-				if (s[j] >= s[j + 1]) {
-					swap(s[j], s[j + 1]);
+		return quickSort(s);
+	}
+
+	string Title(string& s) {
+		Capitalize(s);
+		for (size_t i = 0; i < s.size() - 1; ++i) {
+			if (s[i] == ' ') {
+				s[i + 1] = std::toupper(s[i + 1]);
+			}
+			if (s[i] == '\'' or s[i] == '\"') {
+				// this is here so the function does work on single or double quotes
+				if (s[i - 1] == ' ') {
+					s[i + 1] = std::toupper(s[i + 1]);
 				}
 			}
 		}
 		return s;
 	}
 
+	/*
+	Trims unnecessary spaces from the extreme ends.
+	Time Complexity: O(n)
+	*/
+	string Strip(string& s) {
+		int begining_spaces = 0, end_spaces = 0;
+		int size = s.size();
+
+		// counting spaces in the begining
+		for (int i = 0; i < size; i++) {
+			if (s[i] == ' ')
+				begining_spaces++;
+			else
+				break;
+		}
+		// counting spaces from the end
+		for (int i = 0; i < size; i++) {
+			if (s[size - i - 1] == ' ')
+				end_spaces++;
+			else
+				break;
+		}
+
+		// creating a buffer
+		string str;
+		for (int i = begining_spaces; i < size - end_spaces; i += 1) {
+			str += s[i];
+		}
+
+		// clearing the old string
+		s.erase();
+
+		// moving the buffer to original string
+		s = std::move(str);
+		return s;
+	}
+
+	/*
+	Removes redundant spaces between the words of a string.
+	Time Complexity: O(n)
+	*/
+	string RemoveRedundantSpaces(string& s) {
+		string str_buffer;
+		int space_count = 0;
+		for (char ch : s) {
+			if (ch == ' ' and space_count == 0) {
+				str_buffer.push_back(ch);
+				space_count = 1;
+			}
+			else if (ch != ' ') {
+				str_buffer.push_back(ch);
+				space_count = 0;
+			}
+		}
+		s.erase();
+		s = std::move(str_buffer);
+		return s;
+	}
+
+	string ReformatText(string& s) {
+		// the editting format is inspired from Microsoft Word
+		/**
+		* Reformatting Rules that are being followed:
+		*	- a space after commas, periods, colons, semicolons, question marks,
+			  exclamation marks opening brackets and none before them
+		*	- a space before closing brackets
+		*	- unnecesaary spaces removed.
+		*/
+		/*
+		* What it cannot do:
+				This function doesn't balance quotation marks or any types of brackets.
+				It just knows where a particular punctuation is put.
+				Also it doesn't correct grammar.
+		*/
+
+		// removing unnecessary spaces between words and extreme ends
+		RemoveRedundantSpaces(s);
+		Strip(s);
+
+		/* pre-editting touchs
+		*	- this includes if the very begining of the text is a quotation.
+		*/
+		if (s[0] == '"') {
+			// capitalizes the first letter since its the very begining of the text.
+			s[1] = toupper(s[1]);
+		}
+		s[0] = toupper(s[0]);
+
+		// putting insertion and deletion operations in the hand of deque as these operations are constant time
+		deque<char> buffer;
+
+		// extra padding in beginning sides
+		buffer.push_back(' ');
+		buffer.push_back(' ');
+
+		// filling the buffer with actual string
+		for (char ch : s) {
+			buffer.push_back(ch);
+		}
+
+		// extra padding in end sides
+		buffer.push_back(' ');
+		buffer.push_back(' ');
+
+		// clearing memory of string for effective handling of the process
+		s.clear();
+
+		// actual editing
+		char
+			pch,	// previous character
+			ch,		// current character
+			fch;	// next character
+
+		size_t i = 2;
+		for (; i < buffer.size() - 2;) {
+			// not going to be out of bound
+			pch = buffer[i - 1],
+				ch = buffer[i],
+				fch = buffer[i + 1];
+
+			// for debug info
+			// cout << "i:" << i << " " << pch << ch << fch << endl;
+
+			if (ch == ',' or
+				ch == '.' or
+				ch == ':' or
+				ch == ';' or
+				ch == '?' or
+				ch == '!' or
+				ch == ')' or
+				ch == ']' or
+				ch == '}')
+			{
+				__the_ones_that_are_followed_by_a_space(buffer, i, pch, fch);
+				if (ch == '.') {
+					// to capitalize the first word
+					buffer[i + 1] = std::toupper(buffer[i + 1]);
+				}
+				i++;
+			}
+
+			else if (ch == '(' or ch == '[' or ch == '{')
+			{
+				__the_ones_that_are_preceded_by_a_space(buffer, i, pch, fch);
+				i++;
+			}
+
+			else if (ch == '+' or ch == '-' or ch == '*' or ch == '/' or ch == '=')
+			{
+				if (
+					(pch == '\'' or pch == '"') or
+					(fch == '\'' or fch == '"')
+					)
+				{
+					// any quoted symbol is to be prevented from being handled here
+				}
+				else {
+					__the_ones_that_need_padding(buffer, i, pch, fch);
+				}
+				i++;
+			}
+
+			else if (ch == '\"' or ch == '\'')
+			{
+				if (ch == '\'' and fch == 's' and pch != ' ') {
+					// an apostrophe
+					if (buffer[i + 2] != ' ') {
+						buffer.insert(buffer.begin() + i + 2, ' ');
+						i += 2;
+					}
+					else {
+						i++;
+					}
+				}
+				else if (ch == '\'' and fch == 't' and pch == 'n') {
+					// the case -> isn't, where "not" is shortened to "n't"
+					if (buffer[i + 2] != ' ') {
+						buffer.insert(buffer.begin() + i + 2, ' ');
+						i += 2;
+					}
+					else {
+						i++;
+					}
+				}
+				else {
+					__i_handle_quotes(buffer, i, pch, fch);
+				}
+			}
+
+			else {
+				i++;
+			}
+		}
+
+		// removing extra padding from the begining
+		buffer.pop_front();
+		buffer.pop_front();
+
+		// removing extra padding from the end
+		buffer.pop_back();
+		buffer.pop_back();
+
+		// filling the string from the buffer
+		// this operation is of O(n) time complexity as it is only appending a character at a time
+		for (char ch : buffer) {
+			s += ch;
+		}
+
+		// clearing all the buffer
+		buffer.clear();
+
+		return s;
+
+		/*
+		After notes
+			Briefly explaining:
+				We are playing with a deque<char> and making changes to it while still looping through it.
+				this can result in pointer invalidation if you use the 'for each' loop.
+				The conditions for the looping begins from 2 to size() - 2, since, we are making changes
+				to the string we do need to query its size everytime we enter in loop. since the size
+				varies we need to do check it through size();
+
+				we are also looking at the one preceding character and one succeeding character, so we cannot do
+				this by reference as it will only invite more debugging problems.
+
+				most of the workings in this function are too weird to be understood by us. even i was amazed
+				after looking at how it actually did what it did. but after giving lot of time debugging it
+				all the outputs look appreciable.
+
+		*/
+	}
 
 	// r-value optimization
 	string Upper(string&& s) {
@@ -469,30 +1008,92 @@ Note: it by default provides a vector of doubles, but it can be implicitly typec
 		return Sort(s);
 	}
 
-	vector<string> Split(char const* str, char separator) {
-		return Split(Str(str),separator);
+	string Title(string&& s) {
+		return Title(s);
 	}
 
-	vector<string> Split(string str, char separator) {
-		str += ' ';
+	string Strip(string&& s) {
+		return Strip(s);
+	}
+
+	string RemoveRedundantSpaces(string&& s) {
+		return RemoveRedundantSpaces(s);
+	}
+
+	string ReformatText(string&& s) {
+		return ReformatText(s);
+	}
+
+	string Replace(string s, string Old, string New) {
+		// this is a well working code don't mess with it
+		string str = "";
+		size_t currrent_pos = 0;
+		size_t previous_pos = 0;
+		while (currrent_pos = s.find(Old, previous_pos), currrent_pos <= s.size()) {
+			for (size_t i = previous_pos; i < currrent_pos; i++) {
+				str += s[i];
+			}
+			str += New;
+			previous_pos = currrent_pos + Old.size();
+		}
+		for (size_t i = previous_pos; i < s.size(); i++) {
+			str += s[i];
+		}
+		return str;
+	}
+
+	vector<string> Split(string str, char separator, bool considerSpacesToo) {
+		str = Strip(str);
+		str = RemoveRedundantSpaces(str);
 		string temp;
 		vector<string> vec;
-		for (size_t i = 0; str[i] != '\0'; i++) {
-			if (str[i] == separator || str[i] == ' ') {
-				if (!temp.empty()) {
-					vec.push_back(temp);
-				}
+		if (considerSpacesToo) {
+			str = Replace(str, " ", Str(separator));
+		}
+		str += separator;
+		for (char ch : str) {
+			if (ch == separator and (temp.size() != 0)) {
+				vec.push_back(temp);
 				temp.clear();
 			}
 			else {
-				temp += str[i];
+				if (ch != separator)
+					temp += ch;
 			}
 		}
 		return vec;
 	}
 
-	vector<char> List(char const* str) {
-		return List(Str(str));
+	vector<string> Split(string s, string separator) {
+		char ch;
+		if (separator.size() == 1) {
+			ch = separator[0];
+		}
+		else {
+			s = Replace(s, separator, "#");
+			ch = '#';
+		}
+		return Split(s, ch, false);
+	}
+
+	Array<string> SplitInArray(string str, char separator, bool considerSpacesToo) {
+		string temp;
+		Array<string> arr;
+		if (considerSpacesToo) {
+			str = Replace(str, " ", Str(separator));
+		}
+		str += separator;
+		for (char ch : str) {
+			if (ch == separator) {
+				arr.append(temp);
+				temp.clear();
+			}
+			else {
+				if (ch != separator)
+					temp += ch;
+			}
+		}
+		return arr;
 	}
 
 	vector<char> List(string s) {
@@ -519,5 +1120,80 @@ Note: it by default provides a vector of doubles, but it can be implicitly typec
 		s = ch + s + ch;
 		return s;
 	}
+
+	string quickSort(string s) {
+		if (s.size() <= 1) {
+			return s;
+		}
+		else {
+			char pivot = s[s.size() / 2];
+			string left = "";
+			string middle = "";
+			string right = "";
+			for (char ch : s) {
+				if (ch < pivot) {
+					left += ch;
+				}
+				else if (ch == pivot) {
+					middle += ch;
+				}
+				else {
+					right += ch;
+				}
+			}
+			return quickSort(left) + middle + quickSort(right);
+		}
+	}
+
+// Basic Utility Functions
+	string Sum(vector<string>& vec) {
+		string s = "";
+		for (string& ch : vec) {
+			s += ch;
+		}
+		return s;
+	}
+
+	string Sum(const vector<string>& vec) {
+		vector <string> v = vec;
+		return Sum(v);
+	}
+
+	string Sum(Array<string>& arr) {
+		string sum = "";
+		for (size_t i = 0; i < Len(arr); i++)
+			sum += arr[i];
+		return sum;
+	}
+
+	string Sum(const Array<string>& arr) {
+		Array<string> ar = arr;
+		return Sum(ar);
+	}
+
+	namespace ____to_string____ {
+		string ___notation_braces___(string s, char symbol_left, char symbol_right) {
+			return symbol_left + s + symbol_right;
+		}
+
+		string ___padder___(string s) {
+			return ' ' + s + ' ';
+		}
+	}
+
+	vector<int> make_int(vector<vector<int>>& vec) {
+		vector<int> nums;
+		for (vector<int>& v : vec) {
+			int temp = 0;
+			for (int n : v) {
+				temp = temp * 10 + n;
+			}
+			nums.push_back(temp);
+		}
+		return nums;
+	}
+
+	string toVec:: help(){ return "toVec: Converts Raw Array or Array Class Objects to std::vector";}
+	string toArr:: help() { return "toArr: Converts Raw Array or std::vector to Array Class Objects"; }
 }
 //#######################################################################################################################
