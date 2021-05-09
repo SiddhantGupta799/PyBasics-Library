@@ -1,6 +1,6 @@
 //  Author  - Siddhant Gupta.
 //  Place   - Uttar Pradesh, India.
-//  Completed On 22/09/2020.
+//  Completed On 9/05/2021.
 
 // This PyBasics Library is a simulation of some basic Python functions.
 // while implementing them the names were changed a little bit, as some keywords are reserved by C++.
