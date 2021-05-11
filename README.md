@@ -25,9 +25,9 @@ Features (Classes):
 	* A Special File Handling Class is also provided to handle basic File opening processes in 1-2 lines of code.
 	  Documentation in PyBasics.cpp
 	* A Special Array Class. Array class implements array's in different form. other than std::array's but similar to std::vector
-	* Other than std::vector, Array class has a lot more features built-in. [read further]
-	* It doesn't require size as a parameter. but it has a limitation, it's size is defaulted to INT32_MAX elements.
-	* It can be changed by the user by changing the MAX_ARRAY_CAPACITY.
+	  Other than std::vector, Array class has a lot more features built-in. [read further]
+	  It doesn't require size as a parameter. but it has a limitation, it's size is defaulted to INT32_MAX elements.
+	  It can be changed by the user by changing the MAX_ARRAY_CAPACITY.
 
 Features (Namespaces):
 
@@ -99,7 +99,7 @@ Accessing files by their name will ask you to either make a lambda function that
 			file.open("testfile"+Str(i)+".txt",'r').showfile();
 		}
 
-	Or
+	or
 
 		for (int i = 0; i <= 3; i++) {
 			File("testfile"+Str(i)+".txt",'r').showfile();
@@ -141,14 +141,15 @@ The Array Class is designed to behave like a vector but in a permitted range of 
 
 * Operators Supported:
 
-		- operator<<
-		- operator>> // requires that the size is set during initialization
-		- operator=
-		- operator+
-		- operator+=
-		- operator[]
-		- all of the comparison operators like < , > , <= , >= , == , != 
-		- operator() // this is an interesting one, it takes a function as a parameter and maps the function to all the array elements
+		- operator<<	: shows elements to the console
+		- operator>> 	: requires that the size is set during initialization
+		- operator=	: Assignment
+		- operator+	: Momentary concatenation
+		- operator+=	: by reference concatenation of a single element or initialiser_list
+		- operator[]	: subscript
+		- all of the relational operators < , > , <= , >= , == , != 
+			> Uses std::lexicographical_compare
+		- operator() 	: it takes a function as a parameter and maps the function to all the array elements
 
 * Other memory Manipulation functions Supported:
 
@@ -191,8 +192,6 @@ The Array Class is designed to behave like a vector but in a permitted range of 
 
 	-	The Array Class provides transferabilty among functions without size becoming a hurdle in between.
 
-
-A Discriptive overview on PyBasics:
 
 Something Like this is made possible.
 Also You can use this code for Testing the Library
