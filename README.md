@@ -11,12 +11,11 @@ Features (Funtions) :
 	* Str()        : converts any valid datatype to a string
 	* print()      : can print any no. of arguements
 	* Print()      : can print 1D, 2D Arrays and Vectors
-	* toVec()      : can convert an array to a vector.
 	* find()       : can find an entity in a collection of same type of entities (raw array or vector)
 
 Features (Functors):
 
-	toVec()      : can convert an Array Class object to a vector.
+	toVec()     	 : can convert an Array Class object to a vector.
 	toArr()		 : can convert a vector to an Array Class object
 	
 - good thing about this functor approach is that it can implement a help feature that is solely for the object it is a part of.
@@ -26,9 +25,9 @@ Features (Classes):
 	* A Special File Handling Class is also provided to handle basic File opening processes in 1-2 lines of code.
 	  Documentation in PyBasics.cpp
 	* A Special Array Class. Array class implements array's in different form. other than std::array's but similar to std::vector
-	  but different from std::vector, Array class has a lot more features built-in [read internal documentation]
-	  It doesn't require size as a parameter. but it has a limitation, it's size is defaulted to INT32_MAX elements.
-	  It can be changed by the programmer by changing the MAX_ARRAY_CAPACITY.
+	* Other than std::vector, Array class has a lot more features built-in. [read further]
+	* It doesn't require size as a parameter. but it has a limitation, it's size is defaulted to INT32_MAX elements.
+	* It can be changed by the user by changing the MAX_ARRAY_CAPACITY.
 
 Features (Namespaces):
 
@@ -74,15 +73,15 @@ These are defined using Macros:
 
 This Library Also has a File Class:
 
-	* This class is a wrapper class around the fstream library.
-	* It handles the actual procedures of maintaining file basics like opening in a particular mode.
-	* Closing when the task is done.
+* This class is a wrapper class around the fstream library.
+* It handles the actual procedures of maintaining file basics like opening in a particular mode.
+* Closing when the task is done.
 
-	* overlapping one file on another (if you open another file while a file is already open
+* overlapping one file on another (if you open another file while a file is already open
 	  the new one will not open, but this has been take care of in this class. It will close
 	  the old file and open the new one. Note: it opens the new file in the mode of the previous file.)
 
-	* supports momentary opening of files and their closing. if single line tasks needs to be performed
+* supports momentary opening of files and their closing. if single line tasks needs to be performed
 	  like if you want to open a file and show its content in a for-loop. this can be achieved in a single line
 
 	  ex:If Iam having 4 testfiles, only differed by their no. as:
@@ -92,30 +91,33 @@ This Library Also has a File Class:
 		testfile2.txt
 		testfile3.txt
 		
-	A name you can create. or if you can make a vector of filenames.
-	you can access them as shown below:
+Accessing files by their name will ask you to either make a lambda function that returns name, or make a vector of filenames.
+* However, you can access them as shown below:
 
 		File file;
 		for(int i = 0; i <= 3; i++){
 			file.open("testfile"+Str(i)+".txt",'r').showfile();
 		}
 
+	Or
+
 		for (int i = 0; i <= 3; i++) {
 			File("testfile"+Str(i)+".txt",'r').showfile();
 		}
+		
 	all the basic procedures will be handled behind the scenes and you get to focus on important details.
 
 * You can collect the data of all files in your database in one go by using a vector<string> or Array<string>
   and load the files like the previous ex. and replace showfile() with readfile().
 
 The Array Class is designed to behave like a vector but in a permitted range of 0 - MAX_ARRAY_CAPACITY.
-Compatibility: 
+* Compatibility: 
 	
 		- With the algorithm library 
 		- for each loops
 		- any other Cpp library that accesses a contigious memory block using begin() and end() method.
 
-Supports:
+* Supports:
 	
 		- Negative Index Accessibility
 		- Negative Index Insertability
@@ -137,7 +139,7 @@ Supports:
 		- Rotation in Clockwise and Anti Clockwise Direction
 		- Negative Positive Rearrangement
 
-Operators Supported:
+* Operators Supported:
 
 		- operator<<
 		- operator>> // requires that the size is set during initialization
@@ -148,13 +150,13 @@ Operators Supported:
 		- all of the comparison operators like < , > , <= , >= , == , != 
 		- operator() // this is an interesting one, it takes a function as a parameter and maps the function to all the array elements
 
-Other memory Manipulation functions Supported:
+* Other memory Manipulation functions Supported:
 
 		- resize()
 		- clear()
 		- shrink_to_fit()
 
-Note:
+* Note:
 
 		operators '+', '+=' can concatenate single values as
 		well as values passed in the form of initializer_list.
