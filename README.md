@@ -26,7 +26,7 @@ Features (Classes):
 	  Documentation in PyBasics.cpp
 	* A Special Array Class. Array class implements array's in different form. other than std::array's but similar to std::vector
 	  Other than std::vector, Array class has a lot more features built-in. [read further]
-	  It doesn't require size as a parameter. but it has a limitation, it's size is defaulted to INT32_MAX elements.
+	  It doesn't require size as a parameter. but it has a limitation, it's max capacity is defaulted to INT32_MAX elements.
 	  It can be changed by the user by changing the MAX_ARRAY_CAPACITY.
 
 Features (Namespaces):
