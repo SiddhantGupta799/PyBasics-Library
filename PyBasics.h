@@ -1,6 +1,6 @@
 //  Author  - Siddhant Gupta.
 //  Place   - Uttar Pradesh, India.
-//  Completed On 9/05/2021.
+//  Completed On 22/09/2020.
 
 // This PyBasics Library is a simulation of some basic Python functions.
 // while implementing them the names were changed a little bit, as some keywords are reserved by C++.
@@ -501,31 +501,6 @@ equivalent to:  std::cout << "Hi! " << name << std::endl;
 			this->fill(t);
 		}
 
-		/*			Constructors (for operator= convinience)		*/
-		Array(initializer_list<char> init_l) {
-			this->_filler(init_l);
-		}
-
-		Array(initializer_list<int> init_l) {
-			this->_filler(init_l);
-		}
-
-		Array(initializer_list<float> init_l) {
-			this->_filler(init_l);
-		}
-
-		Array(initializer_list<double> init_l) {
-			this->_filler(init_l);
-		}
-
-		Array(initializer_list<long> init_l) {
-			this->_filler(init_l);
-		}
-
-		Array(initializer_list<char const*> init_l) {
-			this->_filler(init_l);
-		}
-
 		// for management of Strings
 		Array(string s) {
 			int len = (s.size() + 1);
@@ -571,48 +546,9 @@ equivalent to:  std::cout << "Hi! " << name << std::endl;
 			}
 		}
 
-		/*
-		For User defined types or class objects.
-		Even though the Parameter type is 'CustomType' but it should be equal to 'T'
-		ex:
-			Array<Player> players
-			{	// not permissable by the compiler
-				Player{<param1>,<param2>},		// Custom Player Class
-				NewPlayer{<param1>,<param2>}	// Custom NewPlayer Class
-			};
-			even if the two classes posses the exact defintion they shouldn't be assigned in variable object types.
-
-			Array<Player> players
-			{	// not permissable by the compiler
-				NewPlayer{<param1>,<param2>},		// Custom NewPlayer Class
-				NewPlayer{<param1>,<param2>}		// Custom NewPlayer Class
-			};
-
-			Only Valid Initialization
-			Array<Player> players
-			{	// permissable by the compiler
-				Player{<param1>,<param2>},		// Custom Player Class
-				Player{<param1>,<param2>}		// Custom Player Class
-			};
-
-		Also the Custom Class Should Define a Default Constructor.
-		PS: this is no different from vectors.
-		*/
-		template<typename CustomType>
-		Array(initializer_list<CustomType> init_l) {
+		// Initializer list initialization constructor
+		Array(initializer_list<T> init_l) {
 			this->_filler(init_l);
-		}
-
-		// Handles 2D Initializations
-		template<typename _Ty>
-		Array(initializer_list<initializer_list<_Ty>> init_l2D) {
-			this->_filler(init_l2D);
-		}
-
-		// Handles 3D Initializations
-		template<typename _Ty>
-		Array(initializer_list<initializer_list<initializer_list<_Ty>>> init_l3D) {
-			this->_filler(init_l3D);
 		}
 
 		///////////////////////////////////////
@@ -1334,9 +1270,9 @@ equivalent to:  std::cout << "Hi! " << name << std::endl;
 
 		// for debugging
 		void _show() {
-			for (size_t i = 0; i < this->visible_size; i++) {
-				cout << this->values[i] << " ";
-			}cout << endl;
+			for (size_t i = 0; i < this->visible_size - 1; i++) {
+				cout << this->values[i] << ", ";
+			}cout << this-> values[visible_size - 1] << "." << endl;
 		}
 
 	public:
@@ -1527,38 +1463,6 @@ equivalent to:  std::cout << "Hi! " << name << std::endl;
 			this->values = nullptr;
 		}
 	};
-
-	/*
-	For 2D Arrays Initialization can be done this way.
-
-		Array<Array<int>> arr2D {			 
-			{1,4,2},
-			{5,3,7},
-			{6,4,3}
-		};
-
-		for (int i = 0; i < arr2D.size(); i++) {
-			print(arr2D[i]);
-		}
-
-		Array<Array<string>> arr2DStr {				  
-			{"atr","gec","gwq"},
-			{"gtr","hyt","jyt","gir","ort"},
-			{"ryt","thu","fre","tre"}
-		};
-
-		// if using print function
-		for (int i = 0; i < arr2DStr.size(); i++) {
-			print(arr2DStr[i]);
-		}
-
-		for (int i = 0; i < arr2DStr.size(); i++) {
-			for (int j = 0; j < arr2DStr[i].size(); j++) {
-				cout << arr2DStr[i][j] << " ";
-			}
-			cout << endl;
-		}
-	*/
 
 //#######################################################################################################################
 // ================================================== Functions: ======================================================== 
@@ -2732,7 +2636,6 @@ Merge Function Assumes that the passed container is sorted
 // Array <-> Vector Function
 	/* 
 	Not Sure if the functor approach is successful, but it is good to implement a help feature for every one of these
-	These functions uses respective constructors of the types required to convert 
 	*/
 
 	class toVec {
@@ -2775,28 +2678,6 @@ Merge Function Assumes that the passed container is sorted
 		template<typename T>
 		Array<T> operator()(const vector<T>& vec) {
 			return Array<T>(vec.begin(), vec.end());
-		}
-	};
-
-	template<typename T>
-	class toArray {
-		typename std::vector<T>::iterator _begin;
-		typename std::vector<T>::iterator _end;
-		T* _arr_begin = nullptr;
-		T* _arr_end = nullptr;
-	public:
-		toArray(vector<T>& vec) : _begin{ vec.begin() }, _end{ vec.end() } {}
-		
-		template<size_t s>
-		toArray(T(&_arr)[s]): _arr_begin{ std::begin(_arr) }, _arr_end{ std::end(_arr) } {}
-
-		Array<T> operator()() {
-			if (_arr_begin == nullptr) {
-				return Array<T>(this->_begin, this->_end);
-			}
-			else {
-				return Array<T>(this->_arr_begin, this->_arr_end);
-			}
 		}
 	};
 }
