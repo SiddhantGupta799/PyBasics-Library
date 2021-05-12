@@ -1,5 +1,5 @@
 # PyBasicsLibrary
-This is a C++ based Library and uses the it to implement some of the basic Python Built-in functions.
+This is a C++ based Library and uses it to implement some of the basic Python Built-in functions.
 
 Features (Funtions) :
 
