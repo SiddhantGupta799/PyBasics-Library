@@ -8,7 +8,7 @@
 // and Input Output Functionailty
 
 /*
-// Features (Classes):
+Features (Classes):
 	- A Special File Handling Class is also provided to handle basic File opening processes in 1-2 lines of code.
 	  Documentation in PyBasics.cpp
 
@@ -18,13 +18,14 @@
 	  It can be changed by the programmer by changing the MAX_ARRAY_CAPACITY.
 */
 /*
-// Features (Namespaces):
+Features (Namespaces):
 
 	- This Library has two namespaces that are ____internal_print____ and ____to_string____
 		> these handle operations/workings for print() and Str() so they need not be used outside this library.
 
 */
-// Features (Funtions):
+/*
+Features (Funtions):
 // Range()      : provides a vector<double> can be used in range based for loops. with python like Syntax.
 // Input()      : provides a single line Input feature returns a string
 // Size()       : determine the size of the array, despite wherever used and in whatever context.
@@ -33,35 +34,40 @@
 // Str()        : converts any valid datatype to a string
 // print()      : can print any no. of arguements
 // Print()      : can print 1D, 2D Arrays and Vectors
-// toVec()      : can convert an array to a vector.
 // find()       : can find an entity in a collection of same type of entities (raw array or vector)
 
-/**  -- String Manipulation Functions --  **/
-// Upper()						: to Upper Case the whole String
-// Lower()						: to Lower Case the whole String
-// Capitalize()					: to Capitalize a String
-// Reverse()					: to Reverse a String
-// Sort()						: to sort a string
-// List()						: to convert a string to vector of characters
-// Title()						: to make the text 'Title'
-// Replace()					: to remove a replace a part of a string with another
-// Strip()						: trims blank spaces at extreme ends 
-// RemoveRedundantSpaces()		: Reduces numerous unnecessary spaces to one
-// ReformatText()				: Reformats the text [read internal documentation]
-// Pad()						: to append a character at start and in the end of a string
-
+Features (Functors):
+	toVec()      : can convert an Array Class object to a vector.
+	toArr()		 : can convert a vector to an Array Class object
+- good thing about this functor approach is that it can implement a help feature that is solely for the object it is a part of
+*/
+/**  -- String Manipulation Functions --  **//*
+	* Upper()						: to Upper Case the whole String
+	* Lower()						: to Lower Case the whole String
+	* Capitalize()					: to Capitalize a String
+	* Reverse()						: to Reverse a String
+	* Sort()						: to sort a string
+	* List()						: to convert a string to vector of characters
+	* Title()						: to make the text 'Title'
+	* Replace()						: to remove a replace a part of a string with another
+	* Strip()						: trims blank spaces at extreme ends
+	* RemoveRedundantSpaces()		: Reduces numerous unnecessary spaces to one
+	* ReformatText()				: Reformats the text [read internal documentation]
+	* Pad()							: to append a character at start and in the end of a string
+*/
 /**  -- Mapping Functions --  **/
 // Map()        : can Apply any of the String Manipulations on a vector and Array Class objects of strings.
 // MapArray()   : can Apply any of the String Manipulations on an raw-array of Strings, doesn't return anything
 
-// Special Features for more READABILITY
-// These are defined using Macros
-// Aliased "std::cout<<"    as "say" and "ask"
-// Aliased '<< " " <<'      as "with"
-// Aliased "std::cin>>"     as "listen"
-// Aliased ">>"             as "also"
-// Aliased "<<std::endl;"   as "done" and "wrap" while using them no semiclon is required
-
+/* 
+Special Features for more READABILITY
+These are defined using Macros
+	* Aliased "std::cout<<"    as "say" and "ask"
+	* Aliased '<< " " <<'      as "with"
+	* Aliased "std::cin>>"     as "listen"
+	* Aliased ">>"             as "also"
+	* Aliased "<<std::endl;"   as "done" and "wrap" while using them no semiclon is required
+*/
 /*
 Special Python features in C++
 	- An overloaded (*) operator for string multiplication.
@@ -317,15 +323,16 @@ equivalent to:  std::cout << "Hi! " << name << std::endl;
 		- Negative Positive Rearrangement
 
 	Operators Supported:
-		- operator<<
-		- operator>> // requires that the size is set during initialization
-		- operator=
-		- operator+
-		- operator+=
-		- operator[]
-		- all of the comparison operators like < , > , <= , >= , == , != 
-		- operator() // this is an interesting one, it takes a function as a parameter and maps the function to all the array elements
-
+		- operator<<	: shows elements to the console
+		- operator>> 	: requires that the size is set during initialization
+		- operator=		: Assignment
+		- operator+		: Momentary concatenation
+		- operator+=	: by reference concatenation of a single element or initialiser_list
+		- operator[]	: subscripting
+		- all of the relational operators < , > , <= , >= , == , !=
+				> Uses std::lexicographical_compare
+		- operator() 	: it takes a function as a parameter and maps the function to all the array elements
+	
 	Other memory Manipulation functions Supported:
 		- resize()
 		- clear()
@@ -690,6 +697,10 @@ equivalent to:  std::cout << "Hi! " << name << std::endl;
 				assert(index >= 0 and index < (int)this->visible_size);
 			}
 			return this->values[index];
+		}
+
+		T& at(int index) {
+			return this->operator[](index);
 		}
 
 		/*
@@ -1095,17 +1106,16 @@ equivalent to:  std::cout << "Hi! " << name << std::endl;
 			this->visible_size = temp_size;
 		}
 
-		// Removes all the duplicates 
-		// Note: it will also sort the data.
-		// Time Complexity: O(n) [if we keep sorting out of equation] with a positive point that it doesn't use hash table
-		Array& remove_duplicates() {
-			this->sort();
-			size_t temp_size = 1;
-			T prev_elem = this->values[0];
+		// mathematical intersection of two sets
+		// works linearly in sorted arr, at most 
+		Array& intersect(Array<T> arr) {
+			assert(this->visible_size > arr.visible_size);
+			// sorting the other set beforec hand
+			arr.sort();
+			size_t temp_size = 0;
 			for (size_t i = 0; i < this->visible_size; i++) {
-				if (this->values[i] != prev_elem) {
+				if (!arr.binary_search(this->values[i])) {
 					this->values[temp_size++] = this->values[i];
-					prev_elem = this->values[i];
 				}
 			}
 
@@ -1115,6 +1125,46 @@ equivalent to:  std::cout << "Hi! " << name << std::endl;
 			}
 
 			this->visible_size = temp_size;
+			return *this;
+
+
+		}
+
+		// Removes all the duplicates
+		// Time Complexity: O(n) [if we keep a (part: 1) out of equation]
+		// with a positive point that it doesn't use hash table and maintains the order of elements
+		Array& remove_duplicates() {
+			int* _register = new int[this->visible_size]{ 0 };
+
+			// [part: 1] = useful initialization of _register
+			for (size_t i = 0; i < this->visible_size; i++) {
+				T temp = this->values[i];
+				for (size_t j = i + 1; j < this->visible_size; j++) {
+					if (temp == this->values[j]) {
+						_register[j]++;
+					}
+				}
+			}
+
+			// removal of elements
+			size_t temp_size = 0;
+			for (size_t i = 0; i < this->visible_size; i++) {
+				if (_register[i] == 0) {
+					this->values[temp_size++] = this->values[i];
+				}
+			}
+
+			// defaulting deleted section
+			for (size_t i = temp_size; i < this->visible_size; i++) {
+				this->values[i] = T{};
+			}
+
+			this->visible_size = temp_size;
+
+			// nulling out _register
+			delete[]_register;
+			_register = nullptr;
+
 			return *this;
 		}
 
@@ -1141,15 +1191,18 @@ equivalent to:  std::cout << "Hi! " << name << std::endl;
 		// erases a part of the array marked by [begin,end)
 		Array& erase(int begin, int end) {
 			int base = begin;
+			
 			// shifting everything towards left
 			for (size_t i = end; i < this->visible_size; i++) {
 				this->values[base++] = this->values[i];
 			}
+
 			// clearing and defaulting out deleted section
 			for (size_t i = base; i < this->visible_size; i++) {
 				// initiailizing with default value
 				this->values[i] = T{};
 			}
+
 			this->visible_size -= (end - begin);
 			return *this;
 		}
@@ -1272,7 +1325,7 @@ equivalent to:  std::cout << "Hi! " << name << std::endl;
 		void _show() {
 			for (size_t i = 0; i < this->visible_size - 1; i++) {
 				cout << this->values[i] << ", ";
-			}cout << this-> values[visible_size - 1] << "." << endl;
+			}cout << this-> values[visible_size - 1] << '.' << endl;
 		}
 
 	public:
@@ -1614,7 +1667,8 @@ or else the complex but (easy to use) effective functionaility is already implem
 	}
 
 	template <typename T, typename U>
-	bool find(U u, const Array<T>& arr) noexcept {
+	bool find(U u, const Array<T>& ar) noexcept {
+		Array<T> arr = ar;
 		return arr.binary_search(u);
 	}
 
@@ -1877,8 +1931,11 @@ Note: uses the builtin to_string() function.
 
 // These print statements also automatically append a newline but they can be made to not do this, by passing any character at the end of parameters.
 /*
-	These functions are overloaded just to save the usage of namespace print_container.
-	and to also reduce the overhead recursive calls made for 2 - 3 params.
+	- These functions are overloaded just to save the usage of namespace print_container.
+	  and to also reduce the overhead recursive calls made for 2 - 3 params.
+	- this print function is similar to python print(*args,end="") the end arguement is a character
+	- if the character is passed then the print function doesn't put an endl at the end
+
 */
 // print() functions
 	// spare print()
@@ -2268,13 +2325,12 @@ Note: uses the builtin to_string() function.
 
 	// python type string manipulators
 	vector<char> List(string s);							 // converts a string into a vector of characters
-	string Replace(string Str, string Old, string New);
+	string Replace(string& Str, string Old, string New);
 	vector<string> Split(string str, char separator = ' ', bool considerSpacesToo = true);	 // converts a string into vector of strings based on the separator provided 
 	vector<string> Split(string s, string separator);
 
-	// for Array Class Object. Don't prefer if no. of splits is not confirmed.
-	// throws an exception -> "Concat Error: total array size exceeds default limit [50]"
 	Array<string> SplitInArray(string str, char separator = ' ', bool considerSpacesToo = true);
+	Array<int> FindAll(string& str, string s);
 
 	// Cannot be used with map()
 	string Pad(string s, string ch = " ");					// adds padding to the string on the terminal positions
@@ -2338,24 +2394,13 @@ Merge Function Assumes that the passed container is sorted
 		return c;
 	}
 
-//	Dissappointment functions
-
 	template<typename T>
-	void missing_elements_of_an_AP(vector<T> vec) {
-		// Assumption is that the vector has consecutive elements from first_elem to last_elem
-		// and only one elem is missing from it
-		/*
-		T first_elem = (*vec.begin()) - 1, last_elem = *(vec.end() - 1);
-		// using (n * (n+1)) / 2
-		T sum_first = (first_elem * (first_elem + 1)) / 2, sum_last = (last_elem * (last_elem + 1)) / 2;
-		T difference = sum_last - sum_first;
-		T actual_sum = Sum(vec);
-		return difference - actual_sum;
-		*/
+	vector<T> missing_elements_of_an_AP(vector<T> vec) {
 
 		T a = vec[0], l = vec[vec.size() - 1];
 		int n = vec.size();
-		
+		vector<T> missing_elem;
+
 		T d = INT32_MAX;
 		for (int i = 1; i < n; i++) {
 			if ((vec[i] - vec[i - 1]) < d) {
@@ -2363,66 +2408,87 @@ Merge Function Assumes that the passed container is sorted
 			}
 		}
 
-
-
 		T _a = a;
-		cout << "missing elements: ";
 		for (int i = 0; i < n;) {
 			if (_a == vec[i]) { i++; }
-			else { cout << _a << " "; }
+			else { missing_elem.push_back(_a); }
 			_a += d;
 		}
-		cout << endl;
+
+		return missing_elem;
 	}
 
+	// returns a vector of duplicate elements in the parameter vector
+	/*
+	* Anyways I have figured it out either the duplicate 
+	  removal can be done in O(nlog(n)) time at its best. 
+	* but the order is lost and the thing gets sorted.
 	template<typename T>
-	vector<T> FindMoreThanOneMissingElement(vector<T> vec) {
-		// Assumption is that the vector has consecutive elements from first_elem to last_elem
-		// and only one elem is missing from it
-		T low = (*vec.begin()), high = *(vec.end() - 1), len = vec.size();
-		T diff = low - 0;
-		vector<T> miss_cont;
-		for (int i = 0; i < len; i++) {
-			if (vec[i] - i != diff) {
-				while (diff < vec[i] - i) {
-					miss_cont.push_back(diff + i);
-					diff++;
-				}
+	vector<T> RemoveDuplicates(vector<T> vec) {
+		vector<T> dup_cont;
+		sort(vec.begin(), vec.end());
+
+		size_t temp_size = 0;
+		T prev_elem = vec[0];
+		dup_cont.push_back(prev_elem);
+		for (size_t i = 0; i < vec.size(); i++) {
+			if (vec[i] != prev_elem) {
+				dup_cont.push_back(vec[i]);
+				temp_size++;
+				prev_elem = vec[i];
 			}
 		}
-		return miss_cont;
-	}
-	
-	/* // disabled becuase it is constrained to int data type
-	Array<int> FindMoreThanOneMissingElement(Array<int> arr) {
-		// this procedure takes O(n) time but uses Hash Table
-		Array<int> Hash(arr.max() + 1,0); // creates an array of max element from the arr and inits all to 0
-		int arr_size = arr.size(),hash_size = Hash.size();
-		Array<int> miss_cont;
-		for (int i = 0; i < arr_size; i++) {
-			Hash[arr[i]]++;
-		}
 
-		for (int i = arr.min(); i < hash_size; i++) {
-			if(Hash[i] == 0) miss_cont += (i);
-		}
-		return miss_cont;
+		return dup_cont;
 	}
 	*/
 
-	// returns a vector of duplicate elements in the parameter vector
+	/*
+	This Implementation keeps the order intact and uses a register to hold the 
+	information of the elements. 
+	vector:   <1, 4, 2, 5, 4, 2, 5, 3, 6, 4, 5, 3, 2, 4, 6>
+	register: <0, 0, 0, 0, 1, 1, 1, 0, 0, 2, 2, 1, 2, 3, 1>
+	whichever element will have the register as 0 will be preserved
+	output:   <1, 4, 2, 5, 3, 6>
+	Removal process is linear.
+	*/
 	template<typename T>
-	vector<T> GetDuplicates(vector<T> vec) {
-		vector<T> Hash(Max(vec) + 1,0);
-		vector<T> dup_cont;
-		for (size_t i = 0; i < vec.size(); i++) {
-			Hash[vec[i]]++;
+	vector<T> RemoveDuplicates(vector<T>& vec) {
+		int size = vec.size();
+		int* _register = new int[size]{0};
+
+		for (int i = 0; i < size; i++) {
+			T temp = vec[i];
+			for (int j = i + 1; j < size; j++) {
+				if (temp == vec[j]) {
+					_register[j]++;
+				}
+			}
 		}
 
-		for (size_t i = 0; i < Hash.size(); i++) {
-			if (Hash[i] > 1)  dup_cont.push_back(i);
+		/*
+		cout << '<';
+		for (int i = 0; i < size - 1;i++) {
+			cout << _register[i] << ", ";
 		}
-		return dup_cont;
+		cout << _register[size - 1] << '>' << endl;
+		*/
+		
+		// Removal
+		size_t temp_size = 0;
+		for (int i = 0; i < size; i++) {
+			if(_register[i] == 0)
+				vec[temp_size++] = vec[i];
+		}
+
+		// Also a part of removal
+		vec.erase(vec.begin() + temp_size, vec.end());
+
+		// Nulling out everything
+		delete[]_register;
+		_register = nullptr;
+
+		return vec;
 	}
 
 //#######################################################################################################################

@@ -472,7 +472,7 @@ Note: it by default provides a vector of doubles, but it can be implicitly typec
 // String Manipulation functions
 
 //#######################################################################################################################
-	// helper functions for ReformatText()
+	// helper functions for ReformatText
 	void __swap(char& a, char& b) {
 		char temp = a;
 		a = b;
@@ -515,7 +515,7 @@ Note: it by default provides a vector of doubles, but it can be implicitly typec
 		}
 	}
 
-	// yet another helper
+	// helper for ReformatText
 	void __the_ones_that_are_preceded_by_a_space(
 		deque<char>& s,     // the deque that gets edited
 		size_t i,           // index of editing
@@ -545,6 +545,7 @@ Note: it by default provides a vector of doubles, but it can be implicitly typec
 		}
 	}
 
+	// helper for ReformatText
 	void __the_ones_that_need_padding(
 		deque<char>& s,     // the deque that gets edited
 		size_t i,           // index of editing
@@ -587,6 +588,7 @@ Note: it by default provides a vector of doubles, but it can be implicitly typec
 	int single_quote_count = 0;		// for the __i_handle_quotes()
 	int double_quote_count = 0;		// for the __i_handle_quotes()
 
+	// helper for ReformatText
 	void __i_handle_quotes(
 		deque<char>& s,     // the deque that gets edited
 		size_t& i,				// index of editing
@@ -684,6 +686,33 @@ Note: it by default provides a vector of doubles, but it can be implicitly typec
 			}
 			i++;
 		}
+	}
+
+	// helper for FindAll
+	void __get_char_positions(string& str, char& ch, Array<int>& char_index_register) {
+		int i = 0;
+		for (char& c : str) {
+			if (ch == c) {
+				char_index_register += i;
+			}
+			i++;
+		}
+	}
+
+	// helper for FindAll
+	// time complexity: O(n)
+	// n: size of s
+	bool __verify_presence_according_to_register(string& str, string& s, int& begin_position) {
+		int len = s.size();
+		int last_position = begin_position + len;
+		int j = 0;
+		for (int i = begin_position; i < last_position; i++) {
+			if (str[i] != s[j]) {
+				return false;
+			}
+			j++;
+		}
+		return true;
 	}
 	// End of Helper Functions
 //#######################################################################################################################
@@ -1024,21 +1053,82 @@ Note: it by default provides a vector of doubles, but it can be implicitly typec
 		return ReformatText(s);
 	}
 
-	string Replace(string s, string Old, string New) {
-		// this is a well working code don't mess with it
-		string str = "";
-		size_t currrent_pos = 0;
-		size_t previous_pos = 0;
-		while (currrent_pos = s.find(Old, previous_pos), currrent_pos <= s.size()) {
-			for (size_t i = previous_pos; i < currrent_pos; i++) {
-				str += s[i];
+	// Finds all the occurrences of s in str works linearly
+	// time complexity: O(n)
+	Array<int> FindAll(string& str, string s) {
+		Array<int> char_index_register;
+
+		if ((str.size() <= s.size()) and (str.size() <= 1)) {
+			return char_index_register;
+		}
+
+		// time complexity: O(n)
+		// n: str.size()
+		__get_char_positions(str, s[0], char_index_register);
+
+		// time complexity: O(n x m)	// can be ignored as it doesn't traverse the whole input
+		// n: size of char_index_register
+		// m: s.size()
+		int temp = 0;
+		for (int i : char_index_register) {
+			if (__verify_presence_according_to_register(str, s, i)) {
+				char_index_register[temp++] = i;
 			}
-			str += New;
-			previous_pos = currrent_pos + Old.size();
 		}
-		for (size_t i = previous_pos; i < s.size(); i++) {
-			str += s[i];
+
+		// removal is linear
+		char_index_register.erase(temp);
+		return char_index_register;
+	}
+
+	// Replaces all the occurrences of _old in str with _new
+	// time complexity: O(n)
+	string Replace(string& str, string _old, string _new) {
+		Array<int> positions_register = FindAll(str, _old);
+		int difference = _new.size() - _old.size();
+
+		if (difference == 0) {
+			// if size is same then just reinitialize with new string
+			// pass
 		}
+
+		else if (difference > 0) {
+			// inserting blank spaces in string equal to difference
+			// insertions only occur at positions found so not a lot of insertions will be made
+			// time complexity: O(n x m)
+			// n: insertion
+			// m: size of positions_register (very less, only the no. of matches found)
+			int no_of_insertions = 0;
+			for (int& i : positions_register) {
+				i = (i + (no_of_insertions * difference));  // updating the positions_register according to the blanks inserted
+				str.insert(i, " ", difference);
+				no_of_insertions++;
+			}
+		}
+
+		else if (difference < 0) {
+			// deletion of abs(difference)
+			// deletions only occur at positions found so not a lot of deletions will be made
+			// time complexity: O(n x m)
+			// n: erasing
+			// m: size of positions_register (very less, only the no. of matches found)
+			int no_of_deletion = 0;
+			for (int& i : positions_register) {
+				i = (i + (no_of_deletion * difference));  // updating the positions_register according to the blanks deleted
+				str.erase(i, abs(difference));
+				no_of_deletion++;
+			}
+		}
+
+		// time complexity: O(n x m)
+		// n: size of positions_register
+		// m: size of _new
+		for (size_t i : positions_register) {
+			for (size_t j = 0; j < _new.size(); j++) {
+				str[j + i] = _new[j];
+			}
+		}
+
 		return str;
 	}
 
