@@ -404,12 +404,13 @@ Note: it by default provides a vector of doubles, but it can be implicitly typec
 
 		return temp;
 	}
+
+
+
 //#######################################################################################################################
 
 	Array<string> Map(string (function)(string&), Array<string>& arr) {
-		for (size_t i = 0; i < Len(arr); i++) {
-			function(arr[i]);
-		}
+		arr.operator()(function);
 		return arr;
 	}
 	
@@ -419,10 +420,7 @@ Note: it by default provides a vector of doubles, but it can be implicitly typec
 	}
 
 	Array<int> Map(int (function)(string), Array<string>& arr) {
-		Array<int> intArr;
-		for (size_t i = 0; i < Len(arr); i++) {
-			intArr.append((function)(arr[i]));
-		}
+		Array<int> intArr = arr.operator()(function);
 		return intArr;
 	}
 
@@ -432,11 +430,8 @@ Note: it by default provides a vector of doubles, but it can be implicitly typec
 	}
 
 	Array<double> Map(double(function) (string), Array<string>& arr) {
-		Array<double> intArr;
-		for (size_t i = 0; i < Len(arr); i++) {
-			intArr.append((function)(arr[i]));
-		}
-		return intArr;
+		Array<double> dArr = arr.operator()(function);
+		return dArr;
 	}
 
 	Array<double> Map(double(function) (string),const Array<string>& arr) {
@@ -445,9 +440,7 @@ Note: it by default provides a vector of doubles, but it can be implicitly typec
 	}
 
 	Array<double> Map(double(function)(double), Array<double>& arr) {
-		for (double& d : arr) {
-			d = function(d);
-		}
+		arr.operator()(function);
 		return arr;
 	}
 
@@ -457,9 +450,7 @@ Note: it by default provides a vector of doubles, but it can be implicitly typec
 	}
 
 	Array<long double> Map(long double(function)(long double), Array<long double>& arr) {
-		for (long double& d : arr) {
-			d = function(d);
-		}
+		arr.operator()(function);
 		return arr;
 	}
 

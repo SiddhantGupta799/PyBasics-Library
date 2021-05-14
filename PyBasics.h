@@ -712,10 +712,12 @@ equivalent to:  std::cout << "Hi! " << name << std::endl;
 			> int square (int& n) {n = n*n; return n;}
 		*/
 		// Ex -> int square (int n) {return n*n;}
-		void operator()(T(function)(T)) {
+		Array<T>  operator()(T(function)(T)) {
+			Array<T> arrt(this->visible_size);
 			for (size_t i = 0; i < this->visible_size; i++) {
-				this->values[i] = function(this->values[i]);
+				arrt[i] = function(this->values[i]);
 			}
+			return arrt;
 		}
 
 		// Ex -> void square (int& n) {n = n*n;}
@@ -726,10 +728,20 @@ equivalent to:  std::cout << "Hi! " << name << std::endl;
 		}
 
 		// Ex -> int square (int& n) {n = n*n; return n;}
-		void operator()(T(function)(T&)) {
+		Array& operator()(T(function)(T&)) {
 			for (size_t i = 0; i < this->visible_size; i++) {
 				function(this->values[i]);
 			}
+			return *this;
+		}
+
+		template<typename U>
+		Array<U> operator()(U(function)(T)) {
+			Array<U> arru = Array<U>(this->visible_size);
+			for (size_t i = 0; i < this->visible_size; i++) {
+				arru[i] = function(this->values[i]);
+			}
+			return arru;
 		}
 
 		// Copy Assignment, Making two exact copies
@@ -883,6 +895,15 @@ equivalent to:  std::cout << "Hi! " << name << std::endl;
 		
 		// return the address of last element
 		T* end() {
+			return &this->values[visible_size];
+		}
+
+		T* begin() const {
+			return &(this->values[0]);
+		}
+
+		// return the address of last element
+		T* end() const {
 			return &this->values[visible_size];
 		}
 
@@ -2035,9 +2056,10 @@ Note: uses the builtin to_string() function.
 	// This Overloaded Function Handles Printing of a vector returned by a function like Map() or SplitInArray().
 	template <typename T>
 	void Print(const Array<T>& arr, string end = " ") {
-		for (size_t i = 0; i < arr.size(); i++) {
-			say arr[i] << end;
-		} say "" done;
+		for (const T& t : arr) {
+			cout << t << end;
+		}
+		cout << endl;
 	}
 
 //#######################################################################################################################
