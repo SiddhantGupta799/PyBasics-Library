@@ -413,6 +413,25 @@ equivalent to:  std::cout << "Hi! " << name << std::endl;
 			return is;
 		}
 
+		// all relational operators
+		friend bool operator<(const Array<T>& lhs, const Array<T>& rhs) {
+			return std::lexicographical_compare(lhs.begin(), lhs.end(), rhs.begin(), rhs.end());
+		}
+
+		friend bool operator>(const Array<T>& lhs, const Array<T>& rhs) {
+			return rhs < lhs;
+		}
+
+		friend bool operator<=(const Array<T>& lhs, const Array<T>& rhs) {
+			return !(rhs < lhs);
+		}
+
+		friend bool operator>=(const Array<T>& lhs, const Array<T>& rhs) {
+			return !(lhs < rhs);
+		}
+
+
+
 		// for momentary or assignable join of two Arrays
 		friend Array<T> operator+ (Array<T> lhs, Array<T> rhs) {
 			lhs.concat(rhs);
@@ -794,40 +813,17 @@ equivalent to:  std::cout << "Hi! " << name << std::endl;
 
 		// Compares Visible Size and All the values
 		bool operator== (Array<T>& arr) {
-
 			if (this->visible_size != arr.visible_size) {
 				return false;
 			}
-
 			for (size_t i = 0; i < this->visible_size; i++) {
 				if (this->values[i] != arr.values[i]) {
 					return false;
 				}
 			}
-
 			return true;
 		}
-
-		bool operator<(Array<T>& rhs) {
-			return std::lexicographical_compare(this->begin(), this->end(), rhs.begin(), rhs.end());
-		}
-
-		bool operator>(Array<T>& rhs) {
-			return !this->operator<(rhs);
-		}
-
-		bool operator<=(Array<T>& rhs) {
-			return !(this->operator>(rhs));
-		}
-
-		bool operator>=(Array<T>& rhs) {
-			return !(this->operator<(rhs));
-		}
-
-		bool operator!=(Array<T>& rhs) {
-			return !(this->operator==(rhs));
-		}
-
+		
 		operator bool() {
 			return this->values != nullptr;
 		}
@@ -837,13 +833,6 @@ equivalent to:  std::cout << "Hi! " << name << std::endl;
 			this->append(t);
 			return *this;
 		}
-
-		// Appends all the elements passed to it and increases the visible size by the no. of passed elements
-		Array& operator+=(Array<T> arr) {
-			this->concat(arr);
-			return *this;
-		}
-
 
 		  ////////////////////////////////////////
 ///////////////   Memory/Size Manipulators    ///////////////
@@ -1829,31 +1818,24 @@ or else the complex but (easy to use) effective functionaility is already implem
 	}
 
 //#######################################################################################################################
-// TypeCasters
-	// Implementation in PyBasics.cpp
+// TypeCasters	Implemented in PyBasics.cpp
 	int Int(string s);
-	int Int(int i);
 	int Int(char ch);
 	int Int(double d);
+	
 	double Double(string s);
-	double Double(char ch);
-	double Double(double d);
+
 	string Str(char ch);
-	string Str(char const* str);
-	string Str(string& s);
-// does nothing but prevents Str(T t) from throwing a string to string conversion error
+	string Str(char const* str);	// for Exception Safety
+	string Str(string& s);			// does nothing but prevents Str(T t) from throwing a string to string conversion error
+
 /*
 This Str() function converts any type of default datatype into string.
 Note: uses the builtin to_string() function.
 */
-	template <typename T>
-	string Str(T t) {
-		return to_string(t);
-	}
+	template <typename T> string Str(T t) {return to_string(t);}
 
-/*
-	This Str() function converts any type of default datatype raw - array into string.
-*/
+/* This Str() function converts any type of default datatype raw - array into string. */
 	template <class _Ty, size_t _Size>
 	string Str(_Ty(&_Array)[_Size]) noexcept {
 		string s = "[";
@@ -1861,74 +1843,67 @@ Note: uses the builtin to_string() function.
 		for (; i < _Size - 1; i++) {
 			s += ' ' + to_string(_Array[i]) + ',';
 		}
-		s += " " + to_string(_Array[i]);
-		return s + " ]";
+		s += " " + to_string(_Array[i]) + " ]";
+		return s;
 	}
 
 //#######################################################################################################################
-// Input
-// Implementation in PyBasics.cpp
+/**
+	Single Line Input function. Can be used hand in hand with the Typecasters,
+	for Integer or Double Value inputs.
+
+	ex: int i = Int(Input("Enter an Integer.: "));
+		double d = Double(Input("Enter a Float/Double.: "));
+*/
 	string Input(string s = "");
 
 //#######################################################################################################################
 // Overloaded for including vector printing along with other arguements in print();
 	template<typename T>
 	ostream& operator<< (ostream& os, vector<T>& vec) {
-		os << '<';
 		size_t i = 0;
-		for (; i < vec.size() - 1; i++) {
-			os << vec[i] << ", ";
-		}
-		os << vec[i] << '>';
-		return os;
+		os << '<';
+		for (; i < vec.size() - 1; i++) { os << vec[i] << ", "; }
+		return os << vec[i] << '>';
 	}
 
 	template<typename T>
 	ostream& operator<< (ostream& os, const vector<T>& vec) {
-		os << '<';
 		size_t i = 0;
-		for (; i < vec.size() - 1; i++) {
-			os << vec[i] << ", ";
-		}
-		os << vec[i] << '>';
-		return os;
+		os << '<';
+		for (; i < vec.size() - 1; i++) {os << vec[i] << ", ";}
+		return os << vec[i] << '>';
 	}
 
 	// for concatention of two vectors
 	template<typename T>
 	vector<T> operator+(vector<T> lhs, vector<T> rhs) {
-		for (T& t : rhs) {
-			lhs.push_back(t);
-		}
+		for (T& t : rhs) {lhs.push_back(t);}
 		return lhs;
 	}
 
+// Since the Deque is already included i thought might as well implement global operator<< to be used in print function
+	
 	template<typename T>
 	ostream& operator<< (ostream& os, deque<T>& deq) {
-		os << '<';
 		size_t i = 0;
-		for (; i < deq.size() - 1; i++) {
-			os << deq[i] << ", ";
-		}
-		os << deq[i] << '>';
-		return os;
+		os << '<';
+		for (; i < deq.size() - 1; i++) {os << deq[i] << ", ";}
+		return os << deq[i] << '>';
 	}
 
 	template<typename T>
 	ostream& operator<< (ostream& os,const deque<T>& deq) {
-		os << '<';
 		size_t i = 0;
-		for (; i < deq.size() - 1; i++) {
-			os << deq[i] << ", ";
-		}
-		os << deq[i] << '>';
-		return os;
+		os << '<';
+		for (; i < deq.size() - 1; i++) {os << deq[i] << ", ";}
+		return os << deq[i] << '>';
 	}
 
 //#######################################################################################################################
 // Printer
 /*
-	Py namespace provides a print functions
+	Py namespace provides a print function
 	print()
 
 	Note: can be supplied any valid literal value for printing. can also print user defined class objects if the
@@ -1990,9 +1965,7 @@ Note: uses the builtin to_string() function.
 	void print(_Ty(&_Array)[_Size]) noexcept {
 		cout << '[';
 		int i = 0;
-		for (; i < _Size - 1; i++) {
-			cout << _Array[i] << ", ";
-		}
+		for (; i < _Size - 1; i++) {cout << _Array[i] << ", ";}
 		cout << _Array[i] << ']';
 	}
 
@@ -2021,10 +1994,6 @@ Note: uses the builtin to_string() function.
 	By default separator is " " or a single whitespace.
 */
 
-// These are overloaded with default types just to save the overhead of deducing the type.
-	void Print(vector<string>& vec, string end = " ");   // Implemented in PyBasics.cpp
-	void Print(vector<int>& vec, string end = " ");      // Implemented in PyBasics.cpp
-
 	// This overloaded Print() function prints a vector of any type.
 	template <typename T>
 	void Print(vector<T>& vec, string end = " ") {
@@ -2042,14 +2011,11 @@ Note: uses the builtin to_string() function.
 	}
 
 /* For 1D Array Class Objects */
-	// These are overloaded with default types just to save the overhead of deducing the type.
-	void Print(Array<string>& arr, string end = " ");   // Implemented in PyBasics.cpp
-	void Print(Array<int>& arr, string end = " ");      // Implemented in PyBasics.cpp
 
 	template <typename T>
 	void Print(Array<T>& arr, string end = " ") {
-		for (size_t i = 0; i < arr.size(); i++) {
-			say arr[i] << end;
+		for (const T& i : arr) {
+			say i << end;
 		} say "" done;
 	}
 
@@ -2109,7 +2075,7 @@ Note: uses the builtin to_string() function.
 //#######################################################################################################################
 // 1D Raw - Array Printer
 	template <class _Ty, size_t _Size>
-	void Print(_Ty(&_Array)[_Size], string end = " ") noexcept {
+	void Print(_Ty(&_Array)[_Size], string end = " ") {
 		for (int i = 0; i < _Size; i++) {
 			say _Array[i] << end;
 		} say "" done;
@@ -2135,17 +2101,18 @@ Note: uses the builtin to_string() function.
 		b = temp;
 	}
 
-	template<typename T>
-	double Sum(T& arr) {
+	// Sums a 1D Raw-Array
+	template<typename T, size_t s>
+	double Sum(T (&arr)[s]) {
 		double sum = 0;
-		for (size_t i = 0; i < Size(arr); i++) {
+		for (size_t i = 0; i < s; i++) {
 			sum += arr[i];
 		}
 		return sum;
 	}
 
 	template<typename T>
-	T Sum(vector<T>& vec) {
+	T Sum(vector<T> vec) {
 		T sum = 0;
 		for (T& t : vec) {
 			sum += t;
@@ -2154,29 +2121,15 @@ Note: uses the builtin to_string() function.
 	}
 
 	template<typename T>
-	T Sum(const vector<T>& vec) {
-		vector <T> v = vec;
-		return Sum(v);
-	}
-
-	template<typename T>
-	double Sum(Array<T>& arr) {
+	double Sum(Array<T> arr) {
 		double sum = 0;
-		for (size_t i = 0; i < Len(arr); i++)
+		for (size_t i = 0; i < arr.size(); i++)
 			sum += arr[i];
 		return sum;
 	}
 
-	template<typename T>
-	double Sum(const Array<T>& arr) {
-		Array<T> ar = arr;
-		return Sum(ar);
-	}
-
-	string Sum(vector<string>& vec);
-	string Sum(const vector<string>& vec);
-	string Sum(Array<string>& arr);
-	string Sum(const Array<string>& arr);
+	string Sum(vector<string> vec);
+	string Sum(Array<string> arr);
 
 	template<typename T>
 	T Max(T a, T b) {
@@ -2193,7 +2146,7 @@ Note: uses the builtin to_string() function.
 	}
 
 	template<typename T>
-	T Max(vector<T>& vec) {
+	T Max(vector<T> vec) {
 		T temp = vec[0];
 		int size = vec.size();
 		for (int i = 0; i < size; ++i) {
@@ -2205,7 +2158,7 @@ Note: uses the builtin to_string() function.
 	}
 
 	template<typename T>
-	T Min(vector<T>& vec) {
+	T Min(vector<T> vec) {
 		T temp = vec[0];
 		int size = vec.size();
 		for (int i = 0; i < size; ++i) {
@@ -2303,21 +2256,15 @@ Note: uses the builtin to_string() function.
 	}
 
 	template <typename T>
-	vector<T> Sort(vector<T>&& v) {
-		return Sort(v);
-	}
+	vector<T> Sort(vector<T>&& v) {return Sort(v);}
 
 	// for 1D Array Class Objects
-	// Sorts in: O(n^2) Time
+	// Sorts in: O(n^2) Time for arr.size() <= 200
 	template <typename T>
-	Array<T> Sort(Array<T>& arr) {
-		return arr.sort();
-	}
+	Array<T> Sort(Array<T>& arr) {return arr.sort();}
 
 	template <typename T>
-	Array<T> Sort(Array<T>&& arr) {
-		return arr.sort();
-	}
+	Array<T> Sort(Array<T>&& arr) {return arr.sort();}
 
 //#######################################################################################################################
 // String manipulation Functions (Implemented in PyBasics.cpp)
@@ -2355,6 +2302,7 @@ Note: uses the builtin to_string() function.
 	Array<int> FindAll(string& str, string s);
 
 	// Cannot be used with map()
+	int Count(string s, char ch);
 	string Pad(string s, string ch = " ");					// adds padding to the string on the terminal positions
 	string Pad(char const* str, string ch = " ");
 	string Pad(char str, string ch = " ");
@@ -2416,6 +2364,7 @@ Merge Function Assumes that the passed container is sorted
 		return c;
 	}
 
+	// Guesses the Pattern of the AP and returns all the missing element
 	template<typename T>
 	vector<T> missing_elements_of_an_AP(vector<T> vec) {
 
@@ -2506,7 +2455,7 @@ Merge Function Assumes that the passed container is sorted
 		// Also a part of removal
 		vec.erase(vec.begin() + temp_size, vec.end());
 
-		// Nulling out everything
+		// Nulling out register
 		delete[]_register;
 		_register = nullptr;
 
@@ -2521,144 +2470,97 @@ Merge Function Assumes that the passed container is sorted
 	ex: Map(Upper, names);  // assume names as a 1D vector<string>
 		now the Map() function will apply the Upper() function on all the elements of vector by-reference.
 		it supports all the functions that are implemented in the string manipulation section. (Just above this Section)
+
+Note: These cannot modify the vector by-reference as implicit/explicit type transformation is not allowed in C++
 */
-	vector<string> Map(string(*f) (string&), vector <string>& vec);
-	vector<string> Map(string(*f) (string&), const vector <string>& vec);
+	// overloaded for Int()
+	vector<int> Map(int (function) (string), vector<string> vec);			// returns a vector<int>
+	vector<int> Map(int (function) (char), vector<char> vec);				// for compatibility with List function
+	
+	// overloaded for Str()
+	template<typename T>
+	vector<string> Map(string(function)(T), vector<T> vec) {
+		vector<string> temp;
+		for (T i : vec) {
+			temp.push_back(function(i));
+		}
+		return temp;
+	}
+
+// universal Map() functions
 
 	/*
-	Note: These cannot modify the vector by-reference as implicit/explicit type transformation is not allowed in C++
+	Runs the function on the input vector stores the output of the function in output vector
+	then returns the output vector.
+	Ex:
+
+	double Double(string s){
+		return stod(s);
+	}
+
+	Map(Double, vector<string>{"4", "5", "6"})
+	Return: vec, which has been changed to vector<double>{4, 5, 6};
 	*/
-	// overloaded for Int()
-	vector<int> Map(int (*f) (string), vector <string>& vec);				// returns a vector<int>
-	vector<int> Map(int (*f) (string), const vector <string>& vec);			// for compatibility with Split function
-	vector<int> Map(int (*f) (string), const vector <char>& vec);			// for compatibility with List function
-	// overloaded for Double()
-	vector<double> Map(double (*f) (string), vector <string>& vec);          // returns a vector<double>
-	vector<double> Map(double (*f) (string), const vector <string>& vec);    // for compatibility with Split function
-	vector<double> Map(double (*f) (string), const vector <char>& vec);      // for compatibility with List function
-
-	// This Map() Function is overloaded specifically for Str() function.
-	// This converts the values of one vector into string and returns the copy of the new vector.
-	template<typename T>
-	vector<string> Map(string(*f) (T), vector<T>& vec) {
-		vector<string> temp;
-
-		for (T i : vec) {
-			temp.push_back((*f) (i));
-		}
-
-		return temp;
-	}
-
-	// This overloaded copy of Map function Lets you Map Str() with returns from List(), Split() and Range()
-	template<typename T>
-	vector<string> Map(string(*f) (T), const vector<T>& vec) {
-		vector<string> temp;
-
-		for (T i : vec) {
-			temp.push_back((*f) (i));
-		}
-
-		return temp;
-	}
-
-	// universal Map() function
 	template<typename T, typename U>
-	vector<U> Map(U(*f)(T), vector<T> vecT) {
+	vector<U> Map(U(function)(T), vector<T> vecT) {
 		vector<U> vecU;
-		for (size_t i = 0; i < vecT.size(); i++) {
-			vecU.push_back((*f)(vecT[i]));
+		for (T& i : vecT) {
+			vecU.push_back(function(i));
 		}
 		return vecU;
 	}
 
-/*
-	This Map() function takes a function as first param and a Array Class objects as second param.
+	/*
+	Runs the function on the input vector stores the output of the function in same vector
+	then returns the that vector.
+	Ex:
 
-	ex: Map(Upper, names);  // assume names as a 1D Array<string>
-		now the Map() function will apply the Upper() function on all the elements of Array<string> by-reference.
-		it supports all the functions that are implemented in the string manipulation section. (Just above this Section)
-*/
-	// overloaded for Upper(), Lower(), and all other similar String Manip. functions 
-	//Array<string> Map(string(function) (string&), Array<string>& arr);
-	//Array<string> Map(string(function) (string&), const Array<string>& arr);
-
-	// overloaded for Double()
-	Array<double> Map(double(function) (string), Array<string>& arr);
-	Array<double> Map(double(function) (string), const Array<string>& arr);
-
-	// overloaded for Int()
-	Array<int> Map(int(function) (string), Array<string>& arr);
-	Array<int> Map(int(function) (string), const Array<string>& arr);
-
-	// overloaded for Str()
-	template<typename T>
-	Array<string> Map(string (function)(T), Array<T>& arr) {
-		Array<string> temp;
-		for (size_t i = 0; i < arr.size(); i++) {
-			temp += ((function) (arr[i]));
-		}
-		return temp;
+	void square(int& n){
+		n *= n;
 	}
 
-	// This overloaded copy of Map function Lets you Map Str() with returns from SplitInArray()
-	template<typename T>
-	Array<string> Map(string(function)(T), const Array<T>& arr) {
-		Array<T> temp = arr;
-		return Map(function, temp);
-	}
-
-// various universal Map() functions
-	template<typename T, typename U>
-	Array<U> Map(U(function)(T), Array<T> arrT) {
-		Array<U> arrU;
-		for (size_t i = 0; i < arrT.size(); i++) {
-			arrU += ((function)(arrT[i]));
-		}
-		return arrU;
-	}
-
-	template<typename T, typename U>
-	Array<U> Map(U(function)(T&), Array<T> arrT) {
-		Array<U> arrU;
-		for (size_t i = 0; i < arrT.size(); i++) {
-			arrU += ((function)(arrT[i]));
-		}
-		return arrU;
-	}
-
-	template<typename T>
-	Array<T> Map(T(function)(T&), Array<T>& arr) {
-		for (T& t: arr) {
-			((function)(t));
-		}
-		return arr;
-	}
-
-	template<typename T>
-	Array<T> Map(T(function)(T&), const Array<T>& arr) {
-		for (size_t i = 0; i < arr.size(); i++) {
-			((function)(arr[i]));
-		}
-		return arr;
-	}
-
-	/* Maps a function of return type (void) and reads takes elements by reference 
-	*	Because the common convention says any function that only manipulates a single
-		parameter with return type void, should take parameter by reference
+	Map(square, vector<int>{4, 5, 6})
+	Return: vec, which has been changed to vector<int>{16, 25, 36};
 	*/
 	template<typename T>
-	Array<T> Map(void(function)(T&), Array<T> arr) {
-		for (size_t i = 0; i < arr.size(); i++) {
-			(function)(arr[i]);
-		}
-		return arr;
+	vector<T> Map(void(function)(T&), vector<T> vec) {
+		for (T& i:vec) {function(i);}
+		return vec;
 	}
 
-	Array<double> Map(double(function)(double), Array<double>& arr);
-	Array<double> Map(double(function)(double), const Array<double>& arr);
-	Array<long double> Map(long double(function)(long double), Array<long double>& arr);
-	Array<long double> Map(long double(function)(long double), const Array<long double>& arr);
+	/*
+	Runs the function on the input vector stores the output of the function in same vector
+	then returns that vector.
+	Ex: 
+	
+	int square(int& n){
+		n *= n;
+		return n;
+	}
+
+	Map(square, vector<int>{4, 5, 6})
+	Return: vec, which has been changed to vector<int>{16, 25, 36};
+	*/
+	template<typename T>
+	vector<T> Map(T(function)(T&), vector<T> vec) {
+		for (T& i : vec) { function(i); }
+		return vec;
+	}
+
+	/*
+	Runs the function on the input vector stores the output of the function in output vector
+	then returns the output vector.
+	Ex: Map(sin, vector<long double>{4.32,4.613,6.734})
+	Return: vector<long double>{-0.923998, -0.995065, 0.435699};
+	*/
+	template<typename T>
+	vector<T> Map(T(function)(T), vector<T> vec) {
+		vector<T> newVec;
+		for (T i : vec) { 
+			newVec.push_back(function(i)); 
+		}
+		return newVec;
+	}
 
 //#######################################################################################################################
 // Raw - Array of String Mapper

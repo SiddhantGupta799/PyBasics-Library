@@ -122,12 +122,12 @@ namespace Py {
 	}
 
 	void File::close() {
-		file.close();
-		openSuccess = false;
+		this->file.close();
+		this->openSuccess = false;
 	}
 
 	File :: ~File() {
-		if (openSuccess) {
+		if (this->openSuccess) {
 			//say "file closed" wrap;
 			file.close();
 		}
@@ -139,16 +139,8 @@ namespace Py {
 
 // =============================================== Functions: =============================================== 
 
-// Their Implementations
 //#######################################################################################################################
-// Input
-/**
-	Single Line Input function. Can be used hand in hand with the Typecasters,
-	for Integer or Double Value inputs.
-
-	ex: int i = Int(Input("Enter an Integer.: "));
-		double d = Double(Input("Enter a Float/Double.: "));
-*/
+// Implementation: Input
 	string Input(string s) {
 		say s;
 		cin.clear();
@@ -197,6 +189,145 @@ namespace Py {
 	}
 
 //#######################################################################################################################
+// This namespace is for parsing an integer out of string (however there is an stoi() for this)
+	namespace ParseContainer {
+
+		/*
+		Removing Crap from Input String by-reference
+		Cases Include:
+				- Potential leading zeros
+				- Unnecessary extreme spaces
+
+		Max Tolerable Input: string s = "   +000823546   ";
+		The no. should be intact with its sign, no spaces tolerable in between because it leaves no conclusion
+		*/
+		void _remove_crap(string& s) {
+			// has to check all the tomfoolery input
+
+			// removes extreme spaces
+			s = Strip(s);
+
+			int i = 0;
+
+			// if begining is from a sign we exclude it
+			if (s[0] == '+' or s[0] == '-') {
+				i++;
+			}
+
+			// skipping the sign, we remove all the preceding zeros
+			while (s[i] == '0') {
+				if (s[i] == '0') {
+					s.erase(i, 1);
+				}
+			}
+
+			// if the sign was '+' remove it
+			if (s[0] == '+') s.erase(0, 1);
+		}
+
+		// parses the string once all the conditions are met
+		int __parse(Array<int>& vec) {
+			long double num = 0;
+			for (int i : vec) {
+				num *= 10;
+				num += i;
+			}
+			return static_cast<int>(num);
+		}
+
+		// checks the sequence for any kind of invalid literals
+		bool _check_sequence(string& s, bool check_e = false) {
+			int flag = 1;
+
+			for (char c : s) {
+				if (!(c >= 48 and c <= 57)) {
+					return flag *= 0;
+				}
+			}
+
+			return true;
+		}
+
+		// judges if the first character is a negative sign
+		bool _is_negative(char& c) { return (c == '-') ? true : false; }
+
+		//Uses std::lexicographical_compare for only the strings that are approaching the 10 digit range 
+		bool _verify_str_if_len_is_ten(string& s, bool& is_negative) {
+			string ar1;
+			if (is_negative) { ar1 = string("2147483648"); }
+			else { ar1 = string("2147483647"); }
+			string ar2(s);
+			return ar2 <= ar1;
+		}
+
+		/*
+		This is an exception proof Integer parser it doesn't throw any kind of 
+		exceptions if the input is not valid it simply returns 0
+		*/
+		int parseInt(string s) {
+			
+			// removing crap from the input string
+			_remove_crap(s);
+
+			bool is_neg = _is_negative(s[0]);
+			size_t len = s.size();
+			
+			// removing the possibility of the '-' getting into the Array as a valid literal
+			if (is_neg) { s.erase(0, 1); len--; }
+
+			if (_check_sequence(s)) {
+				Array<int> arr = Array<char>(s)(Int);
+
+				if (len < 10) { return is_neg ? (__parse(arr) * (-1)) : __parse(arr); }
+
+				// however many times it may appear that __parse() is being called
+				// it is going to be called only once
+				if (len == 10 and _verify_str_if_len_is_ten(s, is_neg)) {
+					return is_neg ? (__parse(arr) * (-1)) : __parse(arr);
+				}
+				return 0;
+			}
+			return 0;
+		}
+
+		double parseDouble(string s) {
+			// removing crap from the input string
+			_remove_crap(s);
+
+			// taking '.' count in consideration
+			int dot_ct = Count(s,'.');
+			
+			// if no dot == integer
+			if (dot_ct == 0) { return parseInt(s); }
+
+			// if more than one dots invalid literal
+			if (dot_ct > 1) { return 0.0; }
+
+			/* now considering single dot case */
+			vector<string> number;
+			if (dot_ct == 1) {
+				number = Split(s,'.');
+			}
+			
+			// since the dot count is 1 the splitted vector 'number' contains 
+
+			int _e = Count(number[1], 'e');
+			vector<string> decimal;
+			if (_e == 1) {
+				decimal = Split(number[1],'e');
+			}
+
+			/*for (string& str : vec) {
+				if (!_check_sequence(str)) { return 0.0; }
+			}*/
+
+
+
+			return 0.0;
+		}
+	}
+
+//#######################################################################################################################
 // TypeCasters
 /*
 	This Double() and Int() functions Typecasts a valid string into the respective types.
@@ -205,54 +336,19 @@ namespace Py {
 	ex: Int("456") = 456
 		Double("67") = 67.00
 */
-	double Double(string s) {
-		return stod(s);
-	}
+	double Double(string s) {return ParseContainer::parseDouble(s);}
 
-	double Double(char ch) {
-		return stod(Str(ch));
-	}
-
-	double Double(double d) {
-		return d;
-	}
-
-	int Int ( string s ) {
-		return stoi ( s );
-	}
-
-	int Int(int i) {
-		return i;
-	}
+	int Int(string s) { return ParseContainer::parseInt(s); }
+	int Int(int i) {return i;}
+	int Int(double d) { return d; }
 
 	// This overload returns a integer if the character was an integer ex: '5' it will return 5
 	// if passed any other character it will implicitly return the integer or ascii value of charater
-	int Int(char ch) {
-		int num = ch - 48;
-		if((num) >= 0 && (num) <= 9)
-			return (num);
-		return ch;
-	}
+	int Int(char ch) { return (ch >= 48 and ch <= 57) ? (ch - 48) : ch; }
 
-	int Int(double d) {
-		return (int) d;
-	}
-
-	string Str(string& s) {
-		return s;
-	}
-
-	string Str(char ch) {
-		string s = "";
-		s += ch;
-		return s;
-	}
-
-	string Str(char const* str) {
-		string s = "";
-		s += str;
-		return s;
-	}
+	string Str(string& s) {return s;}
+	string Str(char ch) {string s = "";		s += ch;	return s;}
+	string Str(char const* str) {string s = "";		s += str;		return s;}
 
 //#######################################################################################################################
 // For Generating list of numbers as vector 
@@ -298,165 +394,33 @@ Note: it by default provides a vector of doubles, but it can be implicitly typec
 	}
 
 //#######################################################################################################################
-// Special DataTypes Printers, Note the Capitalization in calling
-// @brief Because of the templates creating a linker issue most of the printers are implemented in the .hpp file itself
-
-// 1D vector Printers
-//@brief This Overloaded function for handelling Printing of vector elements of string type
-	void Print (vector <string> &vec, string end ) {
-		for (const string& i : vec) {
-			say i << end;
-		} say "" done;
-	}
-
-//@brief This Overloaded function for handelling Printing of vector elements of string type
-	void Print (vector<int>& vec, string end ) {
-		for (const int& i : vec ) {
-			say i << end;
-		} say "" done;
-	}
-
-
-//@brief This Overloaded function for handelling Printing of Array elements of string type
-	void Print(Array<string>& arr, string end) {
-		for (int i = 0; i < arr.size(); i++) {
-			say arr[i] << end;
-		} say "" done;
-	}
-
-//@brief This Overloaded function for handelling Printing of Array elements of string type
-	void Print(Array <int>& arr, string end) {
-		for (int i = 0; i < arr.size(); i++) {
-			say arr[i] << end;
-		} say "" done;
-	}
-
-//#######################################################################################################################
 // This the map function just like Python
 // also works like that but on vectors and Array Class objects
 // the Upper, Lower, Capitalize and Reverse function are acceptable by this one
 // to extend capabilities the Int, Double and Str are also applicable with this function.
 // for extended mappings (Int, Double and Str) the Map functions returns a vector after applying the changes
 // MapArray function is specifically for the string Arrays Mapping and doesn't extend capabilities for different types of Raw - Arrays
-	vector<string> Map (string (*f) (string&), vector<string>&vec) {
+	vector<string> Map(string(function) (string&), vector<string> vec) {
 		for (string & ar : vec ) {
-			ar = (*f) (ar);
+			function(ar);
 		}
 		return vec;
 	}
 
-	vector<string> Map(string(*f) (string&), const vector <string>& vec) {
-		vector<string> v = vec;
-		return Map(*f,v);
-	}
-
-	vector<int> Map (int (*f) (string), vector <string> &vec) {
+	vector<int> Map(int(function)(string), vector<string> vec) {
 		vector <int> temp;
-
 		for (string ar : vec) {
-			temp.push_back ( (*f) (ar) );
+			temp.push_back(function(ar));
 		}
-
 		return temp;
 	}
 
-	vector<int> Map(int (*f) (string),const vector <string>& vec) {
-		vector <string> v = vec ;
-		return Map(*f,v);
-	}
-
-	vector<int> Map(int (*f) (string), const vector <char>& vec) {
+	vector<int> Map(int(function)(char), vector<char> vec) {
 		vector <int> temp;
-
 		for (char ar : vec) {
-			temp.push_back(Int(ar));
+			temp.push_back(function(ar));
 		}
-
 		return temp;
-	}
-
-	vector<double> Map (double (*f) (string), vector <string>& vec) {
-		vector <double> temp;
-
-		for (string ar : vec) {
-			temp.push_back ( (*f) (ar) );
-		}
-
-		return temp;
-	}
-	
-	vector<double> Map(double (*f) (string),const vector <string>& vec) {
-		vector <double> temp;
-
-		for (string ar : vec) {
-			temp.push_back((*f) (ar));
-		}
-
-		return temp;
-	}
-
-	vector<double> Map(double (*f) (string), const vector <char>& vec) {
-		vector <double> temp;
-
-		for (char ar : vec) {
-			temp.push_back((*f) (Str(ar)));
-		}
-
-		return temp;
-	}
-
-
-
-//#######################################################################################################################
-
-	Array<string> Map(string (function)(string&), Array<string>& arr) {
-		arr.operator()(function);
-		return arr;
-	}
-	
-	Array<string> Map(string (function)(string&),const Array<string>& arr) {
-		Array<string> ar = arr;
-		return Map(function,ar);
-	}
-
-	Array<int> Map(int (function)(string), Array<string>& arr) {
-		Array<int> intArr = arr.operator()(function);
-		return intArr;
-	}
-
-	Array<int> Map(int(function) (string),const Array<string>& arr) {
-		Array<string> ar = arr;
-		return Map(function, ar);
-	}
-
-	Array<double> Map(double(function) (string), Array<string>& arr) {
-		Array<double> dArr = arr.operator()(function);
-		return dArr;
-	}
-
-	Array<double> Map(double(function) (string),const Array<string>& arr) {
-		Array<string> ar = arr;
-		return Map(function, ar);
-	}
-
-	Array<double> Map(double(function)(double), Array<double>& arr) {
-		arr.operator()(function);
-		return arr;
-	}
-
-	Array<double> Map(double(function)(double), const Array<double>& arr) {
-		Array<double> ar = arr;
-		return Map(function, ar);
-	}
-
-	Array<long double> Map(long double(function)(long double), Array<long double>& arr) {
-		arr.operator()(function);
-		return arr;
-	}
-
-	Array<long double> Map(long double(function)(long double), const Array<long double>& arr) {
-		Array<long double> ar = arr;
-		return Map(function,ar);
 	}
 
 //#######################################################################################################################
@@ -1007,6 +971,14 @@ Note: it by default provides a vector of doubles, but it can be implicitly typec
 		*/
 	}
 
+	int Count(string s, char ch) {
+		int  count = 0;
+		for (char c : s) {
+			if (c == ch)count++;
+		}
+		return count;
+	}
+
 	// r-value optimization
 	string Upper(string&& s) {
 		return Upper(s);
@@ -1227,7 +1199,7 @@ Note: it by default provides a vector of doubles, but it can be implicitly typec
 	}
 
 // Basic Utility Functions
-	string Sum(vector<string>& vec) {
+	string Sum(vector<string> vec) {
 		string s = "";
 		for (string& ch : vec) {
 			s += ch;
@@ -1235,21 +1207,11 @@ Note: it by default provides a vector of doubles, but it can be implicitly typec
 		return s;
 	}
 
-	string Sum(const vector<string>& vec) {
-		vector <string> v = vec;
-		return Sum(v);
-	}
-
-	string Sum(Array<string>& arr) {
+	string Sum(Array<string> arr) {
 		string sum = "";
 		for (size_t i = 0; i < Len(arr); i++)
 			sum += arr[i];
 		return sum;
-	}
-
-	string Sum(const Array<string>& arr) {
-		Array<string> ar = arr;
-		return Sum(ar);
 	}
 
 	namespace ____to_string____ {
