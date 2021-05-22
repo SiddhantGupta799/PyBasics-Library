@@ -50,7 +50,7 @@ Features (Functors):
 	* List()						: to convert a string to vector of characters
 	* Title()						: to make the text 'Title'
 	* Replace()						: to remove a replace a part of a string with another
-	* Strip()						: trims blank spaces at extreme ends
+	* Trim()						: trims blank spaces at extreme ends
 	* RemoveRedundantSpaces()		: Reduces numerous unnecessary spaces to one
 	* ReformatText()				: Reformats the text [read internal documentation]
 	* Pad()							: to append a character at start and in the end of a string
@@ -374,7 +374,7 @@ equivalent to:  std::cout << "Hi! " << name << std::endl;
 
 	*/
 
-	template <class T>
+	template <class T = int>
 	class Array {
 		size_t visible_size = 0;							// Visible Size
 		T* values = nullptr;			// Actual array that holds the info
@@ -430,13 +430,16 @@ equivalent to:  std::cout << "Hi! " << name << std::endl;
 			return !(lhs < rhs);
 		}
 
-
-
 		// for momentary or assignable join of two Arrays
 		friend Array<T> operator+ (Array<T> lhs, Array<T> rhs) {
 			lhs.concat(rhs);
 			return lhs;
 		}
+
+		// some friend functions for 'int' datatype
+		friend Array<int>& make_increasing_range(Array<int>& arr, int begin, int end, int increment);
+		friend Array<int>& make_decreasing_range(Array<int>& arr, int begin, int end, int decrement);
+		friend Array<int>& make_random_range(Array<int>& arr, int len);
 
 		// yet another copy of swap :(
 		template<typename Ty>
@@ -487,8 +490,7 @@ equivalent to:  std::cout << "Hi! " << name << std::endl;
 		To fill the default values. passed by the constructor
 		This has to be done because for raw-arrays initialiser_list does it automatically.
 		*/
-		template<typename Custom>
-		void _filler(initializer_list<Custom> init_l) {
+		void _filler(initializer_list<T> init_l) {
 			int i = 0;
 			int size = init_l.size();
 
@@ -624,77 +626,6 @@ equivalent to:  std::cout << "Hi! " << name << std::endl;
 			}
 		}
 
-		/* creates a positive range of elements from [begin,end) using increment 
-		Ex: If you want to create an increasing range.
-		Note: increment should be positive.
-		Where it should be used: all numerical and character datatypes
-		*/
-		Array& make_increasing_range(T begin, T end, T increment = 1) {
-			assert(begin < end);
-			assert(increment > 0);
-			// checking if the range extends beyond the capacity and allocating any shortcomings
-			int num_of_vals = (int)ceil(((double)(end - begin)) / ((double)increment));
-			
-			if (num_of_vals > this->capacity) {
-				this->_de_allocate();
-				this->_allocate(num_of_vals);
-			}
-
-			int idx = 0;
-			for (T i = begin; i < end; i += increment) {
-				this->values[idx] = i;
-				idx++;
-			}
-
-			this->visible_size = idx;
-
-			return *this;
-		}
-
-		/* creates a negative range of elements from [end,begin) using decrement
-		Ex: if you want to create a range that goes from 10 to 1 using a decrement of 1
-		Note: Decrement should be negative.
-		Where it should be used: all numerical and character datatypes
-		*/
-		Array& make_decreasing_range(T begin, T end, T decrement = -1) {
-			assert(end < begin);
-			assert(decrement < 0);
-			// checking if the range extends beyond the capacity and allocating any shortcomings
-			int num_of_vals = (int)ceil(((double)(end - begin)) / ((double)decrement));
-
-			if (num_of_vals > this->capacity) {
-				this->_de_allocate();
-				this->_allocate(num_of_vals);
-			}
-
-			int idx = 0;
-			
-			for (T i = begin; i > end; i += decrement) {
-				this->values[idx] = i;
-				idx++;
-			}
-
-			this->visible_size = idx;
-
-			return *this;
-		}
-
-		//template<std::enable_if_t<!std::is_same<string, T>::value, int>* = nullptr>
-		void make_random_range(int len) {
-			// make sure this function doesn't run on anything else than numeric or character data types
-			if (len > this->capacity) {
-				this->_de_allocate();
-				this->_allocate(len);
-			}
-
-			srand((unsigned int)time(0));
-			fr(0, len, 1) {
-				this->values[i] = (T)rand();
-			}
-
-			this->visible_size = len;
-		}
-
 		// Returns visible size 
 		int size() { return (int)this->visible_size; }
 
@@ -731,6 +662,7 @@ equivalent to:  std::cout << "Hi! " << name << std::endl;
 			> int square (int& n) {n = n*n; return n;}
 		*/
 		// Ex -> int square (int n) {return n*n;}
+		// This operator returns a copy of the elements mapped with the function passed as parameter
 		Array<T>  operator()(T(function)(T)) {
 			Array<T> arrt(this->visible_size);
 			for (size_t i = 0; i < this->visible_size; i++) {
@@ -878,15 +810,6 @@ equivalent to:  std::cout << "Hi! " << name << std::endl;
 		}
 
 		// return the address of first element
-		T* begin() {
-			return &(this->values[0]);
-		}
-		
-		// return the address of last element
-		T* end() {
-			return &this->values[visible_size];
-		}
-
 		T* begin() const {
 			return &(this->values[0]);
 		}
@@ -2055,20 +1978,20 @@ Note: uses the builtin to_string() function.
 
 	template <typename T>
 	void Print(Array<Array<T>>& arr, string end = "\t") {
-		for (size_t i = 0; i < arr.size(); i++) {
-			for (size_t j = 0; j < arr[i].size(); j++) {
-				say arr[i][j] << end;
-			} say "" done;
+		for (const Array<T>& ar: arr) {
+			for (const T& t : ar) {
+				say t << end;
+			}say "" done;
 		}
 	}
 
 	// for r-value of 2D Array Class Object
 	template <typename T>
 	void Print(const Array<Array<T>>& arr, string end = "\t") {
-		for (size_t i = 0; i < arr.size(); i++) {
-			for (size_t j = 0; j < arr[i].size(); j++) {
-				say arr[i][j] << end;
-			} say "" done;
+		for (const Array<T>& ar : arr) {
+			for (const T& t : ar) {
+				say t << end;
+			}say "" done;
 		}
 	}
 
@@ -2277,7 +2200,7 @@ Note: uses the builtin to_string() function.
 	string Reverse(string& s);
 	string Sort(string& s);
 	string Title(string& s);
-	string Strip(string& s);
+	string Trim(string& s);
 	string RemoveRedundantSpaces(string& s);
 	string ReformatText(string& s);
 
@@ -2288,7 +2211,7 @@ Note: uses the builtin to_string() function.
 	string Reverse(string&& s);
 	string Sort(string&& s);	// String overload for Sort functions
 	string Title(string&& s);
-	string Strip(string&& s);
+	string Trim(string&& s);
 	string RemoveRedundantSpaces(string&& s);
 	string ReformatText(string&& s);
 
@@ -2670,5 +2593,16 @@ Note: These cannot modify the vector by-reference as implicit/explicit type tran
 			return Array<T>(vec.begin(), vec.end());
 		}
 	};
+
+//###########################################################################################################
+// overloaded for Array<char>
+
+	void toupper(char& c);
+	void tolower(char& c);
+	bool isalpha(char c);
+	bool isdigit(char c);
+	bool islower(char c);
+	bool isupper(char c);
+	bool isalnum(char c);
 }
 #endif // PYBASICS_H

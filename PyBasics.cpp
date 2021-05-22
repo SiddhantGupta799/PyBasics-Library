@@ -17,6 +17,77 @@ This Library also provides some of the fun Macros (Strictly Optional to Use), to
 a bit of typing.
 */
 namespace Py {
+
+	/* creates a positive range of elements from [begin,end) using increment
+		Ex: If you want to create an increasing range.
+		Note: increment should be positive.
+		Where it should be used: all numerical and character datatypes
+	*/
+	Array<int>& make_increasing_range(Array<int>& arr, int begin, int end, int increment) {
+		assert(begin < end);
+		assert(increment > 0);
+		// checking if the range extends beyond the capacity and allocating any shortcomings
+		int num_of_vals = (int)ceil(((double)(end - begin)) / ((double)increment));
+
+		if (num_of_vals > arr.capacity) {
+			arr._de_allocate();
+			arr._allocate(num_of_vals);
+		}
+
+		int idx = 0;
+		for (int i = begin; i < end; i += increment) {
+			arr.values[idx] = i;
+			idx++;
+		}
+
+		arr.visible_size = idx;
+
+		return arr;
+	}
+
+	/* creates a negative range of elements from [end,begin) using decrement
+	Ex: if you want to create a range that goes from 10 to 1 using a decrement of 1
+	Note: Decrement should be negative.
+	Where it should be used: all numerical and character datatypes
+	*/
+	Array<int>& make_decreasing_range(Array<int>& arr, int begin, int end, int decrement) {
+		assert(end < begin);
+		assert(decrement < 0);
+		// checking if the range extends beyond the capacity and allocating any shortcomings
+		int num_of_vals = (int)ceil(((double)(end - begin)) / ((double)decrement));
+
+		if (num_of_vals > arr.capacity) {
+			arr._de_allocate();
+			arr._allocate(num_of_vals);
+		}
+
+		int idx = 0;
+
+		for (int i = begin; i > end; i += decrement) {
+			arr.values[idx] = i;
+			idx++;
+		}
+		arr.visible_size = idx;
+		return arr;
+	}
+
+	//template<std::enable_if_t<!std::is_same<string, T>::value, int>* = nullptr>
+	Array<int>& make_random_range(Array<int>& arr, int len) {
+		// make sure this function doesn't run on anything else than numeric or character data types
+		if (len > arr.capacity) {
+			arr._de_allocate();
+			arr._allocate(len);
+		}
+
+		srand((unsigned int)time(0));
+		fr(0, len, 1) {
+			arr.values[i] = rand();
+		}
+
+		arr.visible_size = len;
+		return arr;
+	}
+
 	// Implementation of File Handler Class
 	File::File(string name, File_Open_Modes mode) : name{ name }, mode{ mode }
 	{
@@ -205,7 +276,7 @@ namespace Py {
 			// has to check all the tomfoolery input
 
 			// removes extreme spaces
-			s = Strip(s);
+			s = Trim(s);
 
 			int i = 0;
 
@@ -236,15 +307,12 @@ namespace Py {
 		}
 
 		// checks the sequence for any kind of invalid literals
-		bool _check_sequence(string& s, bool check_e = false) {
-			int flag = 1;
-
+		bool _check_sequence(string& s) {
 			for (char c : s) {
 				if (!(c >= 48 and c <= 57)) {
-					return flag *= 0;
+					return false;
 				}
 			}
-
 			return true;
 		}
 
@@ -269,6 +337,8 @@ namespace Py {
 			// removing crap from the input string
 			_remove_crap(s);
 
+			if (s == "") { return 0; }
+
 			bool is_neg = _is_negative(s[0]);
 			size_t len = s.size();
 			
@@ -290,41 +360,120 @@ namespace Py {
 			return 0;
 		}
 
+		/* Will return 0.0000000001 if input string has 2e-10 */
+		double _get_exp(string& s) {
+			double d = 1;
+			int _exp = parseInt(s);
+			if (_exp > 0) {
+				for (int i = 0; i < _exp; i++) {
+					d *= 10;
+				}
+			}
+			else {
+				for (int i = 0; i < abs(_exp); i++) {
+						d /= 10;
+				}
+			}
+			return d;
+		}
+
+		double _get_decimal_part(string& s) {
+			double _decimal{};
+			vector<int> dec = Map(Int, List(s));
+			// decimal parse 
+			for (int i = dec.size() - 1; i >= 0; i--) {
+				_decimal /= 10;
+				_decimal += dec[i];
+			}
+			_decimal /= 10;
+			return _decimal;
+		}
+
 		double parseDouble(string s) {
 			// removing crap from the input string
 			_remove_crap(s);
 
+			bool is_neg = s[0] == '-';
+
+			double _exp = 1;
+			double _decimal{};
+			double _non_decimal{};
+
 			// taking '.' count in consideration
 			int dot_ct = Count(s,'.');
+
+			// now looking for the posibility that the string might have an e
+			int _e_ct = Count(s, 'e');
 			
-			// if no dot == integer
-			if (dot_ct == 0) { return parseInt(s); }
+			// if (no dot and no e) == integer
+			if (dot_ct == 0 and _e_ct == 0 and s.size() <= 11) { return parseInt(s); }
 
-			// if more than one dots invalid literal
-			if (dot_ct > 1) { return 0.0; }
-
-			/* now considering single dot case */
-			vector<string> number;
-			if (dot_ct == 1) {
-				number = Split(s,'.');
-			}
-			
-			// since the dot count is 1 the splitted vector 'number' contains 
-
-			int _e = Count(number[1], 'e');
-			vector<string> decimal;
-			if (_e == 1) {
-				decimal = Split(number[1],'e');
+			// a little processing here
+			else if (dot_ct == 0 and _e_ct == 1) {
+				vector<string> number = Split(s,'e');
+				_exp = _get_exp(number[1]);
+				_non_decimal = parseInt(number[0]);
+				return (_non_decimal)*_exp;
 			}
 
-			/*for (string& str : vec) {
-				if (!_check_sequence(str)) { return 0.0; }
-			}*/
+			else if (dot_ct == 1 and _e_ct == 0) {
+				vector<string> number = Split(s, '.');
+				_non_decimal = parseInt(number[0]);
+				_decimal = _get_decimal_part(number[1]);
+				is_neg ? (_decimal *= (-1)) : _decimal;
+				return (_non_decimal + _decimal) * _exp;
+			}
 
+			else if (dot_ct == 1 and _e_ct == 1) {
 
+				// this vector is supposed to contain the number and its exponent
+				vector<string> number_exp;
+
+				// this vector is supposed to contain the number along with its decimal part
+				vector<string> number;
+
+				// one exponent means the first half will contain the the numeric string
+				number_exp = Split(s, 'e');
+
+				// exponent is made here according to its symbol
+				_exp = _get_exp(number_exp[1]);
+
+				// which gets parsed here
+				number = Split(number_exp[0], '.');
+
+				_decimal = _get_decimal_part(number[1]);
+
+				is_neg ? (_decimal *=(-1)) : _decimal;
+
+				_non_decimal = parseInt(number[0]);
+
+				return (_non_decimal + _decimal) * _exp;
+			}
 
 			return 0.0;
 		}
+
+		/*
+	// Maybe if I'll Make it again these are the things required 
+	Array<string> cases{"+.1","-.1","-.1e2","-.1e-2","-e-2","-.e-2","1e11","-1.e-2","-1.1","-1e-2",
+		"1038472037485",
+		"1038472037485e12",
+		"1038472037485e-12",
+		"103847203748.5"
+	};
+	for (string _case : cases) {
+		try {
+			print("Double:", _case, Double(_case));
+			print("stod:", _case, stod(_case));
+		}
+		catch (exception e) {
+			print("Exception:", e.what(), _case);
+		}
+		catch (...) {
+			print("Uncatchable Exception");
+		}
+	}
+		*/
 	}
 
 //#######################################################################################################################
@@ -336,11 +485,11 @@ namespace Py {
 	ex: Int("456") = 456
 		Double("67") = 67.00
 */
-	double Double(string s) {return ParseContainer::parseDouble(s);}
+	double Double(string s) {return stod(s);}
 
 	int Int(string s) { return ParseContainer::parseInt(s); }
 	int Int(int i) {return i;}
-	int Int(double d) { return d; }
+	int Int(double d) { return (int)d; }
 
 	// This overload returns a integer if the character was an integer ex: '5' it will return 5
 	// if passed any other character it will implicitly return the integer or ascii value of charater
@@ -704,7 +853,7 @@ Note: it by default provides a vector of doubles, but it can be implicitly typec
 		for (int i = 0; i < len; i++) {
 			id = (rand() % size);
 
-			id % 2 == 0 ? s[id] = toupper(s[id]) : s[id] = tolower(s[id]);
+			id % 2 == 0 ? s[id] = std::toupper(s[id]) : s[id] = std::tolower(s[id]);
 		}
 		return s;
 	}
@@ -743,7 +892,7 @@ Note: it by default provides a vector of doubles, but it can be implicitly typec
 	Trims unnecessary spaces from the extreme ends.
 	Time Complexity: O(n)
 	*/
-	string Strip(string& s) {
+	string Trim(string& s) {
 		int begining_spaces = 0, end_spaces = 0;
 		int size = s.size();
 
@@ -754,6 +903,7 @@ Note: it by default provides a vector of doubles, but it can be implicitly typec
 			else
 				break;
 		}
+
 		// counting spaces from the end
 		for (int i = 0; i < size; i++) {
 			if (s[size - i - 1] == ' ')
@@ -762,17 +912,13 @@ Note: it by default provides a vector of doubles, but it can be implicitly typec
 				break;
 		}
 
-		// creating a buffer
-		string str;
-		for (int i = begining_spaces; i < size - end_spaces; i += 1) {
-			str += s[i];
+		size_t temp = 0;
+		for (int i = begining_spaces; i < (size - end_spaces); i++) {
+			s[temp++] = s[i];
 		}
 
-		// clearing the old string
-		s.erase();
-
-		// moving the buffer to original string
-		s = std::move(str);
+		s.erase(temp);
+		
 		return s;
 	}
 
@@ -780,21 +926,21 @@ Note: it by default provides a vector of doubles, but it can be implicitly typec
 	Removes redundant spaces between the words of a string.
 	Time Complexity: O(n)
 	*/
-	string RemoveRedundantSpaces(string& s) {
-		string str_buffer;
+	string RemoveRedundantSpaces(string& s) {  // strengthened
 		int space_count = 0;
-		for (char ch : s) {
-			if (ch == ' ' and space_count == 0) {
-				str_buffer.push_back(ch);
+		int size = s.size();
+		size_t temp_size = 0;
+		for (int i = 0; i < size ;i++) {
+			if (s[i] == ' ' and space_count == 0) {
+				s[temp_size++] = s[i];
 				space_count = 1;
 			}
-			else if (ch != ' ') {
-				str_buffer.push_back(ch);
+			else if (s[i] != ' ') {
+				s[temp_size++] = s[i];
 				space_count = 0;
 			}
 		}
-		s.erase();
-		s = std::move(str_buffer);
+		s.erase(temp_size);
 		return s;
 	}
 
@@ -816,16 +962,16 @@ Note: it by default provides a vector of doubles, but it can be implicitly typec
 
 		// removing unnecessary spaces between words and extreme ends
 		RemoveRedundantSpaces(s);
-		Strip(s);
+		Trim(s);
 
 		/* pre-editting touchs
 		*	- this includes if the very begining of the text is a quotation.
 		*/
 		if (s[0] == '"') {
 			// capitalizes the first letter since its the very begining of the text.
-			s[1] = toupper(s[1]);
+			s[1] = std::toupper(s[1]);
 		}
-		s[0] = toupper(s[0]);
+		s[0] = std::toupper(s[0]);
 
 		// putting insertion and deletion operations in the hand of deque as these operations are constant time
 		deque<char> buffer;
@@ -1004,8 +1150,8 @@ Note: it by default provides a vector of doubles, but it can be implicitly typec
 		return Title(s);
 	}
 
-	string Strip(string&& s) {
-		return Strip(s);
+	string Trim(string&& s) {
+		return Trim(s);
 	}
 
 	string RemoveRedundantSpaces(string&& s) {
@@ -1096,16 +1242,16 @@ Note: it by default provides a vector of doubles, but it can be implicitly typec
 	}
 
 	vector<string> Split(string str, char separator, bool considerSpacesToo) {
-		str = Strip(str);
-		str = RemoveRedundantSpaces(str);
+		Trim(str);
+		RemoveRedundantSpaces(str);
 		string temp;
 		vector<string> vec;
 		if (considerSpacesToo) {
-			str = Replace(str, " ", Str(separator));
+			Replace(str, " ", Str(separator));
 		}
 		str += separator;
 		for (char ch : str) {
-			if (ch == separator and (temp.size() != 0)) {
+			if (ch == separator) {
 				vec.push_back(temp);
 				temp.clear();
 			}
@@ -1238,5 +1384,16 @@ Note: it by default provides a vector of doubles, but it can be implicitly typec
 
 	string toVec:: help(){ return "toVec: Converts Raw Array or Array Class Objects to std::vector";}
 	string toArr:: help() { return "toArr: Converts Raw Array or std::vector to Array Class Objects"; }
+
+//###########################################################################################################
+// overloaded for Array<char>
+
+	void toupper(char& c) {c = std::toupper(c);}
+	void tolower(char& c) {c = std::tolower(c);}
+	bool isalpha(char c)  {return std::isalpha(c);}
+	bool isdigit(char c)  {return std::isdigit(c);}
+	bool islower(char c)  {return std::islower(c);}
+	bool isupper(char c)  {return std::isupper(c);}
+	bool isalnum(char c)  {return std::isalnum(c);}
 }
 //#######################################################################################################################
