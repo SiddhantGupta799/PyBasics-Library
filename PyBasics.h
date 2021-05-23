@@ -293,7 +293,7 @@ equivalent to:  std::cout << "Hi! " << name << std::endl;
 
 // ================================================= Array Class: ======================================================= 
 	constexpr int MAX_ARRAY_CAPACITY = INT32_MAX;
-	constexpr int EXTRA_RESERVE = 10;
+	constexpr int EXTRA_RESERVE = 6;
 	/*
 	This Array Class is designed to behave like a vector but in a permitted range of 0 - MAX_ARRAY_CAPACITY.
 	Compatibility: 
@@ -376,10 +376,10 @@ equivalent to:  std::cout << "Hi! " << name << std::endl;
 
 	template <class T = int>
 	class Array {
-		size_t visible_size = 0;							// Visible Size
-		T* values = nullptr;			// Actual array that holds the info
+		size_t visible_size = 0;							 // Visible Size
+		T* values = nullptr;			 // Actual array that holds the info
 		int capacity = 0;					// Holding capacity of the array
-		int multiplier = 0;			// factor by which the capacity increases
+		int multiplier = 0;		   // factor by which the capacity increases
 		
 		// this helps in determining whether a Array<char> was intended to behave like a string
 		bool is_string = false;
@@ -398,11 +398,8 @@ equivalent to:  std::cout << "Hi! " << name << std::endl;
 			}
 			else {
 				os << '[';
-				size_t i = 0;
-				for (; i < arr.visible_size - 1; i++) {
-					os << arr.values[i] << ", ";
-				}
-				os << arr.values[i] << ']';
+				arr._show();
+				os << ']';
 			}
 			return os;
 		}
@@ -434,6 +431,20 @@ equivalent to:  std::cout << "Hi! " << name << std::endl;
 		friend Array<T> operator+ (Array<T> lhs, Array<T> rhs) {
 			lhs.concat(rhs);
 			return lhs;
+		}
+
+		/* flattens A 2D matrix into a 1D array
+		* This looks like a drunken approach to a certain type of problem i.e. flattening 
+		  a matrix down to 1D
+		*/
+		friend Array<T> operator~(Array<Array<T>>& matrix) {
+			Array<T> flattened_matrix;
+			for (Array<T>& ar : matrix) {
+				for (T& t : ar) {
+					flattened_matrix.append(t);
+				}
+			}
+			return flattened_matrix;
 		}
 
 		// some friend functions for 'int' datatype
@@ -1005,7 +1016,7 @@ equivalent to:  std::cout << "Hi! " << name << std::endl;
 
 		// to remove all the occurrences of elem
 		// time complexity: O(n)
-		void remove_all(T elem) {
+		Array& remove_all(T elem) {
 			size_t temp_size = 0;
 			for (size_t i = 0; i < this->visible_size;i++) {
 				if (this->values[i] != elem) {
@@ -1019,11 +1030,13 @@ equivalent to:  std::cout << "Hi! " << name << std::endl;
 			}
 
 			this->visible_size = temp_size;
+
+			return *this;
 		}
 
 		// conditional remove
 		//	> removes elements if a certain condition is met
-		void remove_if(bool(function)(T)) {
+		Array& remove_if(bool(function)(T)) {
 			size_t temp_size = 0;
 			for (size_t i = 0; i < this->visible_size; i++) {
 				if (!function(this->values[i])) {
@@ -1059,8 +1072,6 @@ equivalent to:  std::cout << "Hi! " << name << std::endl;
 
 			this->visible_size = temp_size;
 			return *this;
-
-
 		}
 
 		// Removes all the duplicates
@@ -1255,10 +1266,12 @@ equivalent to:  std::cout << "Hi! " << name << std::endl;
 		}
 
 		// for debugging
-		void _show() {
-			for (size_t i = 0; i < this->visible_size - 1; i++) {
-				cout << this->values[i] << ", ";
-			}cout << this-> values[visible_size - 1] << '.' << endl;
+		void _show() const {
+			if (this->visible_size >= 1) {
+				for (size_t i = 0; i < this->visible_size - 1; i++) {
+					cout << this->values[i] << ", ";
+				}cout << this->values[visible_size - 1];
+			}
 		}
 
 	public:
@@ -1364,7 +1377,7 @@ equivalent to:  std::cout << "Hi! " << name << std::endl;
 
 		// logs all the properties of the array on console
 		void log_properties(char const* entry = "",bool log_obj_details = false, bool show_log_count = true) {
-			// irrespective of the object
+			
 			static int _i = 0;
 			
 			if (show_log_count)
@@ -1378,7 +1391,7 @@ equivalent to:  std::cout << "Hi! " << name << std::endl;
 			if(entry != "")
 				cout << "Debug Entry: " << entry << endl;
 
-			cout << "Content: "; this->_show();
+			cout << "Content: "; this->_show(); cout << endl;
 			cout << "Size: " << this->visible_size << endl;
 			cout << "Current Capacity Multiplier: " << this->multiplier << endl;
 			cout << "Current Capacity: " << this->capacity << endl;
@@ -1786,16 +1799,22 @@ Note: uses the builtin to_string() function.
 	ostream& operator<< (ostream& os, vector<T>& vec) {
 		size_t i = 0;
 		os << '<';
-		for (; i < vec.size() - 1; i++) { os << vec[i] << ", "; }
-		return os << vec[i] << '>';
+		if (vec.size() >= 1) {
+			for (; i < vec.size() - 1; i++) { os << vec[i] << ", "; }
+			os << vec[i];
+		}
+		return os << '>';
 	}
 
 	template<typename T>
 	ostream& operator<< (ostream& os, const vector<T>& vec) {
 		size_t i = 0;
 		os << '<';
-		for (; i < vec.size() - 1; i++) {os << vec[i] << ", ";}
-		return os << vec[i] << '>';
+		if (vec.size() >= 1) {
+			for (; i < vec.size() - 1; i++) { os << vec[i] << ", "; }
+			os << vec[i];
+		}
+		return os << '>';
 	}
 
 	// for concatention of two vectors
@@ -1811,16 +1830,23 @@ Note: uses the builtin to_string() function.
 	ostream& operator<< (ostream& os, deque<T>& deq) {
 		size_t i = 0;
 		os << '<';
-		for (; i < deq.size() - 1; i++) {os << deq[i] << ", ";}
-		return os << deq[i] << '>';
+		if (deq.size() >= 1) {
+			for (; i < deq.size() - 1; i++) { os << deq[i] << ", "; }
+			os << deq[i];
+		}
+		return os << '>';
 	}
 
 	template<typename T>
 	ostream& operator<< (ostream& os,const deque<T>& deq) {
 		size_t i = 0;
+		size_t i = 0;
 		os << '<';
-		for (; i < deq.size() - 1; i++) {os << deq[i] << ", ";}
-		return os << deq[i] << '>';
+		if (deq.size() >= 1) {
+			for (; i < deq.size() - 1; i++) { os << deq[i] << ", "; }
+			os << deq[i];
+		}
+		return os << '>';
 	}
 
 //#######################################################################################################################
