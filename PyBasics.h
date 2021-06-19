@@ -208,7 +208,7 @@ equivalent to:  std::cout << "Hi! " << name << std::endl;
 		}
 		// all the basic procedures will be handled behind the scenes and you get to focus on important details.
 
-	* even you can collect the data of all files in your data base in one go by using a vector<string>
+	* even_indice_val you can collect the data of all files in your data base in one go by using a vector<string>
 	  and load the files like the previous ex. and replace showfile() with readfile().
 
 	* This class is Compatible with the Map() function.
@@ -293,7 +293,7 @@ equivalent to:  std::cout << "Hi! " << name << std::endl;
 
 // ================================================= Array Class: ======================================================= 
 	constexpr int MAX_ARRAY_CAPACITY = INT32_MAX;
-	constexpr int EXTRA_RESERVE = 6;
+	constexpr int EXTRA_RESERVE = 10;
 	/*
 	This Array Class is designed to behave like a vector but in a permitted range of 0 - MAX_ARRAY_CAPACITY.
 	Compatibility: 
@@ -374,20 +374,22 @@ equivalent to:  std::cout << "Hi! " << name << std::endl;
 
 	*/
 
+// defined for Array class only, but can be used for any object that has 'name' as its public variable
+#define init_name(x) x.name = #x
+
 	template <class T = int>
 	class Array {
 		size_t visible_size = 0;							 // Visible Size
 		T* values = nullptr;			 // Actual array that holds the info
 		int capacity = 0;					// Holding capacity of the array
 		int multiplier = 0;		   // factor by which the capacity increases
-		
+	
+	public:
+		const char* name = "not provided";
+
+	private:
 		// this helps in determining whether a Array<char> was intended to behave like a string
 		bool is_string = false;
-
-		// Used to get length as a returned value from a global function
-		friend size_t Len(const Array<T>& arr) {
-			return arr.visible_size;
-		}
 
 		// To Print the Array. it can be used with all the print functions.
 		friend std::ostream& operator<< (std::ostream& os, const Array<T>& arr) {
@@ -398,7 +400,7 @@ equivalent to:  std::cout << "Hi! " << name << std::endl;
 			}
 			else {
 				os << '[';
-				arr._show();
+				arr.show();
 				os << ']';
 			}
 			return os;
@@ -527,10 +529,15 @@ equivalent to:  std::cout << "Hi! " << name << std::endl;
 			this->_allocate();
 		}
 
+		string get_name() {
+			return this->name;
+		}
+
 		// allocates s units of memory
 		Array(size_t s) {
 			this->visible_size = s;
 			this->_allocate(s);
+			this->fill(T{});
 		}
 
 		// allocates s units of memory and initializes all of them to t
@@ -574,30 +581,31 @@ equivalent to:  std::cout << "Hi! " << name << std::endl;
 			}
 		}
 		
-		// Iterator Based Inititalization
+		// Iterator Based Inititalization, supports iterators that have an overloaded ++ and * and - operator
 		template<class _Iter, enable_if_t<_is_iterator_v<_Iter>, int> = 0>
 		Array(_Iter begin, _Iter end) {
-			int len = end - begin;
-			this->_allocate(len);
-			this->visible_size = len;
-			for (int i = 0; i < len; i++) {
-				this->values[i] = *(begin + i);
+			_Iter it = begin;
+			int size = end - begin;
+			this->_allocate(size);
+			this->visible_size = size;
+			int i = 0;
+			while (it != end) {
+				this->values[i++] = *it;
+				it++;
 			}
 		}
 
 		// Initializer list initialization constructor
-		Array(initializer_list<T> init_l) {
-			this->_filler(init_l);
-		}
+		Array(initializer_list<T> init_l) {this->_filler(init_l);}
 
 		///////////////////////////////////////
 ///////////////   Copy Constructor    ///////////////
 		//////////////////////////////////////
 
-		Array(const Array<T>& obj) :
-			multiplier{ obj.multiplier },
-			visible_size {obj.visible_size},
-			capacity {obj.capacity}
+		Array(const Array<T>& obj): 
+			multiplier{ obj.multiplier }, 
+			visible_size {obj.visible_size}, 
+			capacity {obj.capacity} 
 		{
 			this->values = new T[obj.capacity];
 
@@ -767,9 +775,7 @@ equivalent to:  std::cout << "Hi! " << name << std::endl;
 			return true;
 		}
 		
-		operator bool() {
-			return this->values != nullptr;
-		}
+		operator bool() {return this->values != nullptr;}
 
 		// operator format for appending
 		Array& operator+=(T t) {
@@ -900,6 +906,7 @@ equivalent to:  std::cout << "Hi! " << name << std::endl;
 			// sorting
 			this->sort();
 
+			// checking that insertion doesn't overflow the buffer
 			if ((int)this->visible_size == this->capacity) {
 				this->_allocate();
 			}
@@ -975,10 +982,12 @@ equivalent to:  std::cout << "Hi! " << name << std::endl;
 		}
 
 		// outputs all the occurrences of elem
-		void find_all(T elem) {
+		Array<T> find_all(T elem) {
+			Array<T> arr;
 			for (size_t i = 0; i < this->visible_size; i++) {
-				if (this->values[i] == elem) cout << "Exists at index: " << i << endl;
+				if (this->values[i] == elem) arr.append(i);
 			}
+			return arr;
 		}
 
 		// replaces all occurrences like this:
@@ -1050,13 +1059,14 @@ equivalent to:  std::cout << "Hi! " << name << std::endl;
 			}
 
 			this->visible_size = temp_size;
+			return *this;
 		}
 
 		// mathematical intersection of two sets
 		// works linearly in sorted arr, at most 
 		Array& intersect(Array<T> arr) {
 			assert(this->visible_size > arr.visible_size);
-			// sorting the other set beforec hand
+			// sorting the other set before hand
 			arr.sort();
 			size_t temp_size = 0;
 			for (size_t i = 0; i < this->visible_size; i++) {
@@ -1075,7 +1085,7 @@ equivalent to:  std::cout << "Hi! " << name << std::endl;
 		}
 
 		// Removes all the duplicates
-		// Time Complexity: O(n) [if we keep a (part: 1) out of equation]
+		// Time Complexity: O(n) [if we keep (part: 1) out of equation]
 		// with a positive point that it doesn't use hash table and maintains the order of elements
 		Array& remove_duplicates() {
 			int* _register = new int[this->visible_size]{ 0 };
@@ -1133,21 +1143,24 @@ equivalent to:  std::cout << "Hi! " << name << std::endl;
 		}
 
 		// erases a part of the array marked by [begin,end)
-		Array& erase(int begin, int end) {
-			int base = begin;
-			
-			// shifting everything towards left
-			for (size_t i = end; i < this->visible_size; i++) {
-				this->values[base++] = this->values[i];
-			}
+		Array& erase(int begin, int end) {	// false parameters cause no change to Array
+			// the parameters should be inbound
+			if (begin < this->visible_size and end < this->visible_size and (end - begin < this->visible_size)) {
+				int base = begin;
 
-			// clearing and defaulting out deleted section
-			for (size_t i = base; i < this->visible_size; i++) {
-				// initiailizing with default value
-				this->values[i] = T{};
-			}
+				// shifting everything towards left
+				for (size_t i = end; i < this->visible_size; i++) {
+					this->values[base++] = this->values[i];
+				}
 
-			this->visible_size -= (end - begin);
+				// clearing and defaulting out deleted section
+				for (size_t i = base; i < this->visible_size; i++) {
+					// initiailizing with default value
+					this->values[i] = T{};
+				}
+
+				this->visible_size -= (end - begin);
+			}
 			return *this;
 		}
 
@@ -1157,9 +1170,8 @@ equivalent to:  std::cout << "Hi! " << name << std::endl;
 			return *this;
 		}
 
-		private:
-
-			void _place_sorted(T elem, int end) {
+	private:
+		void _place_sorted(T elem, int end) {
 				end--;
 				
 				// finding the place
@@ -1172,8 +1184,7 @@ equivalent to:  std::cout << "Hi! " << name << std::endl;
 				this->values[end + 1] = elem;
 			}
 
-		public:
-
+	public:
 		// Sorts the array (using insertion sort), only if it is not sorted
 		// since it is adaptive and stable
 		Array& sort() {
@@ -1202,25 +1213,70 @@ equivalent to:  std::cout << "Hi! " << name << std::endl;
 			}
 			return *this;
 		}
+	private:
+		// odd_indice_val even_indice_val placement
+		// reversal with half rotation
+		// odd_indice_val even_indice_val placement
+		void odd_even_place_concatenation() {
+				int even_size = 0, odd_size = 0;
+				auto iseven = [](int n) -> bool { return n % 2 == 0; };
 
+				if (iseven(this->visible_size)) even_size = odd_size = (this->visible_size / 2);
+				else odd_size = (this->visible_size / 2), even_size = ((this->visible_size / 2) + 1);
+
+				// say even_size with odd_size done;
+				T* even_indice_val = new T[even_size]{};
+				T* odd_indice_val = new T[odd_size]{};
+
+				int e_ct = 0, o_ct = 0;
+				for (size_t i = 0; i < this->visible_size; i++) {
+					if (iseven(i))even_indice_val[e_ct++] = this->values[i];
+					else odd_indice_val[o_ct++] = this->values[i];
+				}
+
+				for (int i = 0; i < even_size; i++) {
+					//say even_indice_val[i] with "";
+					this->values[i] = even_indice_val[i];
+				}
+
+				//say "" wrap;
+
+				for (int i = 0; i < odd_size; i++) {
+					//say odd_indice_val[i] with "";
+					this->values[i + e_ct] = odd_indice_val[i];
+				}
+
+				//say "" wrap;
+
+				delete[] even_indice_val; 
+				delete[] odd_indice_val;
+				even_indice_val = odd_indice_val = nullptr;
+			}
+
+	public:
 		Array& shuffle() {
-			// library offers a highly reliable shuffle without any loss of data in brutally random shuffling
-			std::random_shuffle(this->begin(), this->end());
+			// doesn't use libraries random shuffle functions
+			this->odd_even_place_concatenation();
+			this->reverse();
+			this->rotate_anti_clockwise(this->visible_size / 2);
+			this->odd_even_place_concatenation();
 			return *this;
 		}
 
+		// swaps the entire owner ship with the passed param
 		Array& swap(Array<T>& obj) {
 			this->_swap(this->visible_size, obj.visible_size);
 			this->_swap(this->multiplier, obj.multiplier);
 			this->_swap(this->capacity, obj.capacity);
+			this->_swap(this->is_string, obj.is_string);
 			this->_swap(this->values, obj.values);
 			return *this;
 		}
 
 		// returns index of the element
 		int linear_search(T elem) {
-			for (size_t i = 0; i < visible_size; i++) {
-				if (values[i] == elem) {
+			for (size_t i = 0; i < this->visible_size; i++) {
+				if (this->values[i] == elem) {
 					return i;
 				}
 			}
@@ -1247,7 +1303,6 @@ equivalent to:  std::cout << "Hi! " << name << std::endl;
 		}
 
 	private:
-
 		// recursive version
 		int __binary_search(T* arr, int low, int high, T elem) {
 			int mid = (low + high) / 2;
@@ -1266,7 +1321,7 @@ equivalent to:  std::cout << "Hi! " << name << std::endl;
 		}
 
 		// for debugging
-		void _show() const {
+		void show() const {
 			if (this->visible_size >= 1) {
 				for (size_t i = 0; i < this->visible_size - 1; i++) {
 					cout << this->values[i] << ", ";
@@ -1299,7 +1354,7 @@ equivalent to:  std::cout << "Hi! " << name << std::endl;
 			// again swapping the ownership
 			this->_swap(this->values, sample);
 
-			// finding
+			// finding, the idx here merely represents the presence of the element and not the actual index where it exists
 			int idx = this->__binary_search(sample, 0, this->visible_size, elem);
 
 			// clearing the sample
@@ -1352,7 +1407,6 @@ equivalent to:  std::cout << "Hi! " << name << std::endl;
 			return (_last - &this->values[0]);
 		}
 
-
 		// Max Element
 		T max() {
 			T temp = this->values[0];
@@ -1383,15 +1437,16 @@ equivalent to:  std::cout << "Hi! " << name << std::endl;
 			if (show_log_count)
 				cout << "Log Record Count: " << _i << endl;
 
+			if(entry != "")
+				cout << "Debug Entry: " << entry << endl;
+
 			if (log_obj_details) {
 				cout << "Object Address: " << this << endl;
 				cout << "Object Type: " << typeid(*this).name() << endl;
 			}
 
-			if(entry != "")
-				cout << "Debug Entry: " << entry << endl;
-
-			cout << "Content: "; this->_show(); cout << endl;
+			cout << "Object Name: " << this->name << endl;
+			cout << "Content: "; this->show(); cout << endl;
 			cout << "Size: " << this->visible_size << endl;
 			cout << "Current Capacity Multiplier: " << this->multiplier << endl;
 			cout << "Current Capacity: " << this->capacity << endl;
@@ -1413,7 +1468,6 @@ equivalent to:  std::cout << "Hi! " << name << std::endl;
 			return *this;
 		}
 
-	public:
 		// rotates the array by the given number of times anticlockwise
 		// time complexity: O(n), auxilliary space required: 5 * sizeof(int)
 		Array& rotate_anti_clockwise(int no_of_times = 1) {
@@ -1840,7 +1894,6 @@ Note: uses the builtin to_string() function.
 	template<typename T>
 	ostream& operator<< (ostream& os,const deque<T>& deq) {
 		size_t i = 0;
-		size_t i = 0;
 		os << '<';
 		if (deq.size() >= 1) {
 			for (; i < deq.size() - 1; i++) { os << deq[i] << ", "; }
@@ -2242,7 +2295,7 @@ Note: uses the builtin to_string() function.
 	string ReformatText(string&& s);
 
 	// python type string manipulators
-	vector<char> List(string s);							 // converts a string into a vector of characters
+	vector<char> MakeList(string s);							 // converts a string into a vector of characters
 	string Replace(string& Str, string Old, string New);
 	vector<string> Split(string str, char separator = ' ', bool considerSpacesToo = true);	 // converts a string into vector of strings based on the separator provided 
 	vector<string> Split(string s, string separator);
