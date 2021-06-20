@@ -18,6 +18,7 @@ a bit of typing.
 */
 namespace Py {
 
+	// maybe i have to rewrite them
 	/* creates a positive range of elements from [begin,end) using increment
 		Ex: If you want to create an increasing range.
 		Note: increment should be positive.
@@ -29,18 +30,9 @@ namespace Py {
 		// checking if the range extends beyond the capacity and allocating any shortcomings
 		int num_of_vals = (int)ceil(((double)(end - begin)) / ((double)increment));
 
-		if (num_of_vals > arr.capacity) {
-			arr._de_allocate();
-			arr._allocate(num_of_vals);
-		}
-
-		int idx = 0;
 		for (int i = begin; i < end; i += increment) {
-			arr.values[idx] = i;
-			idx++;
+			arr.append(i);
 		}
-
-		arr.visible_size = idx;
 
 		return arr;
 	}
@@ -56,35 +48,19 @@ namespace Py {
 		// checking if the range extends beyond the capacity and allocating any shortcomings
 		int num_of_vals = (int)ceil(((double)(end - begin)) / ((double)decrement));
 
-		if (num_of_vals > arr.capacity) {
-			arr._de_allocate();
-			arr._allocate(num_of_vals);
-		}
-
-		int idx = 0;
-
 		for (int i = begin; i > end; i += decrement) {
-			arr.values[idx] = i;
-			idx++;
+			arr.append(i);
 		}
-		arr.visible_size = idx;
+
 		return arr;
 	}
 
-	//template<std::enable_if_t<!std::is_same<string, T>::value, int>* = nullptr>
+	/* Makes a random range by the use of rand() */
 	Array<int>& make_random_range(Array<int>& arr, int len) {
-		// make sure this function doesn't run on anything else than numeric or character data types
-		if (len > arr.capacity) {
-			arr._de_allocate();
-			arr._allocate(len);
-		}
-
 		srand((unsigned int)time(0));
 		fr(0, len, 1) {
-			arr.values[i] = rand();
+			arr.append(rand());
 		}
-
-		arr.visible_size = len;
 		return arr;
 	}
 
@@ -379,7 +355,7 @@ namespace Py {
 
 		double _get_decimal_part(string& s) {
 			double _decimal{};
-			vector<int> dec = Map(Int, List(s));
+			vector<int> dec = Map(Int, MakeList(s));
 			// decimal parse 
 			for (int i = dec.size() - 1; i >= 0; i--) {
 				_decimal /= 10;
@@ -487,7 +463,7 @@ namespace Py {
 */
 	double Double(string s) {return stod(s);}
 
-	int Int(string s) { return ParseContainer::parseInt(s); }
+	int Int(string s) { return stoi(s); }
 	int Int(int i) {return i;}
 	int Int(double d) { return (int)d; }
 
@@ -1276,11 +1252,16 @@ Note: it by default provides a vector of doubles, but it can be implicitly typec
 	}
 
 	Array<string> SplitInArray(string str, char separator, bool considerSpacesToo) {
+		Trim(str);
+		RemoveRedundantSpaces(str);
+
 		string temp;
 		Array<string> arr;
+
 		if (considerSpacesToo) {
 			str = Replace(str, " ", Str(separator));
 		}
+
 		str += separator;
 		for (char ch : str) {
 			if (ch == separator) {
@@ -1295,7 +1276,7 @@ Note: it by default provides a vector of doubles, but it can be implicitly typec
 		return arr;
 	}
 
-	vector<char> List(string s) {
+	vector<char> MakeList(string s) {
 		vector<char> chars;
 		for (char ch : s) {
 			chars.push_back(ch);
@@ -1355,7 +1336,7 @@ Note: it by default provides a vector of doubles, but it can be implicitly typec
 
 	string Sum(Array<string> arr) {
 		string sum = "";
-		for (size_t i = 0; i < Len(arr); i++)
+		for (int i = 0; i < arr.size(); i++)
 			sum += arr[i];
 		return sum;
 	}
