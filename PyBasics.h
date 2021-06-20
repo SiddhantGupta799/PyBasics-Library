@@ -99,7 +99,7 @@ Here in this Library there are two types of printers or outputstreams.
 
 using namespace std;
 
-// just a piece of code that determines if the passed paramenter is an iterator
+// just a piece of code that determines if the passed parameter is an iterator
 template <class _iter>
 using _iter_cat_t = typename iterator_traits<_iter>::iterator_category;
 
@@ -1023,29 +1023,11 @@ equivalent to:  std::cout << "Hi! " << name << std::endl;
 			return val;
 		}
 
-		// to remove all the occurrences of elem
-		// time complexity: O(n)
-		Array& remove_all(T elem) {
-			size_t temp_size = 0;
-			for (size_t i = 0; i < this->visible_size;i++) {
-				if (this->values[i] != elem) {
-					this->values[temp_size++] = this->values[i];
-				}
-			}
-
-			// defaulting deleted section
-			for (size_t i = temp_size; i < this->visible_size; i++) {
-				this->values[i] = T{};
-			}
-
-			this->visible_size = temp_size;
-
-			return *this;
-		}
-
 		// conditional remove
 		//	> removes elements if a certain condition is met
-		Array& remove_if(bool(function)(T)) {
+		// making this adpatable to functor and lamdas
+		template<class Func>
+		Array& remove_if(Func function) {
 			size_t temp_size = 0;
 			for (size_t i = 0; i < this->visible_size; i++) {
 				if (!function(this->values[i])) {
@@ -1059,6 +1041,24 @@ equivalent to:  std::cout << "Hi! " << name << std::endl;
 			}
 
 			this->visible_size = temp_size;
+			return *this;
+		}
+
+	private:
+		// for remove_all
+		struct is_elem {
+			T t;
+			is_elem(T _t) : t{ _t } {}
+			bool operator()(T e) {
+				return t == e;
+			}
+		};
+
+	public:
+		// to remove all the occurrences of elem
+		// time complexity: O(n)
+		Array& remove_all(T elem) {
+			this->remove_if(is_elem(elem));
 			return *this;
 		}
 
@@ -1134,7 +1134,8 @@ equivalent to:  std::cout << "Hi! " << name << std::endl;
 		// conditional count
 		//	Counts only if a certain condition is met.
 		//	Condition should be passed as a function.
-		int count_if(bool(function)(T)) {
+		template<class Func>
+		int count_if(Func function) {
 			int count = 0;
 			for (size_t i = 0; i < this->visible_size; i++) {
 				if (function(this->values[i])) count++;
@@ -2475,6 +2476,20 @@ Merge Function Assumes that the passed container is sorted
 
 Note: These cannot modify the vector by-reference as implicit/explicit type transformation is not allowed in C++
 */
+	// Supports functors and lamdas but refrain from the void return type
+	/*
+	template<typename T, typename U, class Func>
+	vector<U> IntelligentMap(Func function, vector<T> vecT) {
+		vector<U> vecU;
+
+		for (T t : vecT) {
+			vecU.push_back(function(t));
+		}
+
+		return vecU;
+	}
+	*/
+
 	// overloaded for Int()
 	vector<int> Map(int (function) (string), vector<string> vec);			// returns a vector<int>
 	vector<int> Map(int (function) (char), vector<char> vec);				// for compatibility with List function
