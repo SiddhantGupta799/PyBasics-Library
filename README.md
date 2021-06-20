@@ -110,89 +110,6 @@ Accessing files by their name will ask you to either make a lambda function that
 * You can collect the data of all files in your database in one go by using a vector<string> or Array<string>
   and load the files like the previous ex. and replace showfile() with readfile().
 
-The Array Class is designed to behave like a vector but in a permitted range of 0 - MAX_ARRAY_CAPACITY.
-* Compatibility: 
-	
-		- With the algorithm library 
-		- for each loops
-		- any other Cpp library that accesses a contigious memory block using begin() and end() method.
-
-* Supports:
-	
-		- Negative Index Accessibility
-		- Negative Index Insertability
-		- Sorted Insertability
-		- Input via operator>>
-		- Appending
-		- Concatenation
-		- Replacment
-		- Poping
-		- Sorting
-		- Reversal
-		- Erasing
-		- Max and Min
-		- Duplicates Removal
-		- Count and Conditional Count
-		- Conditional Removal and Complete removal (all occurrences) of an Element
-		- Linear and Binary Search
-		- Lower and Upper Bound Search
-		- Rotation in Clockwise and Anti Clockwise Direction
-		- Negative Positive Rearrangement
-
-* Operators Supported:
-
-		- operator<<	: shows elements to the console
-		- operator>> 	: requires that the size is set during initialization
-		- operator=	: Assignment
-		- operator+	: Momentary concatenation
-		- operator+=	: by reference concatenation of a single element or initialiser_list
-		- operator[]	: subscript
-		- all of the relational operators < , > , <= , >= , == , != 
-			> Uses std::lexicographical_compare
-		- operator() 	: it takes a function as a parameter and maps the function to all the array elements
-
-* Other memory Manipulation functions Supported:
-
-		- resize()
-		- clear()
-		- shrink_to_fit()
-
-* Note:
-
-		operators '+', '+=' can concatenate single values as
-		well as values passed in the form of initializer_list.
-		ex:
-			// operator +=
-			Array<int> arr{4,5,3};
-			print(arr);
-			arr += 5;
-			print(arr);
-			arr += {4,8,1};
-			print(arr);
-
-			// operator +
-			print(arr + Array<int>{67, 89, 54});
-
-		output:
-			4 5 3
-			4 5 3 5
-			4 5 3 5 4 8 1
-			4 5 3 5 4 8 1 67 89 54
-
-		operator '+'  doesn't support direct initializer_list
-	
-	Since Raw arrays and std::array have a problem of not being dynamically declarable.
-	for ex.: we cannot pass a variable array size in the templated std::array<{typename},{size_t}>
-		i.e. we cannot increase a counter variable and then declare the Array with counter as the value of size.
-		ex:
-			int counter_val = function(param);
-			std::array<int,counter_val> arr;   // this results in a compiler error.
-			to avoid this. Array class is designed to not have the size parameter passed to it as template declaration.
-			But Size can be passed as a param to constructor
-
-	-	The Array Class provides transferabilty among functions without size becoming a hurdle in between.
-
-
 Something Like this is made possible.
 Also You can use this code for Testing the Library
 	
@@ -215,3 +132,7 @@ Also You can use this code for Testing the Library
 	print("testing the presence of candace:",' ');
 	("candace" In names) ? print("found her") : print("couldn't find her");
 	print("Str(\"*\") * 4: ", Str("*") * 4);
+
+
+PyBasics package makes extensive use of the Arrays-Library which you'll find here -> https://github.com/SiddhantGupta799/Arrays-Library
+That library previously was a part of the Package but due to increasing size it was made as a standalone Library. 
