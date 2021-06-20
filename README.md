@@ -134,5 +134,5 @@ Also You can use this code for Testing the Library
 	print("Str(\"*\") * 4: ", Str("*") * 4);
 
 
-PyBasics package makes extensive use of the Arrays-Library which you'll find here -> https://github.com/SiddhantGupta799/Arrays-Library
-That library previously was a part of the Package but due to increasing size it was made as a standalone Library. 
+PyBasics package makes extensive use of the Arrays-Library which you'll find here -> https://github.com/SiddhantGupta799/Arrays-Library.
+This library previously was a part of the Package but due to increasing size it was made as a standalone Library. 
