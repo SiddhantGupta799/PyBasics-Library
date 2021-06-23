@@ -100,20 +100,6 @@ Here in this Library there are two types of printers or outputstreams.
 
 using namespace std;
 
-// just a piece of code that determines if the passed parameter is an iterator
-template <class _iter>
-using _iter_cat_t = typename iterator_traits<_iter>::iterator_category;
-
-template <class... _Types>
-using void_tt = void;
-
-template <class _Ty, class = void>
-constexpr bool _is_iterator_v = false;
-
-template <class _Ty>
-constexpr bool _is_iterator_v<_Ty, void_tt<_iter_cat_t<_Ty>>> = true;
-
-
 namespace Py {
 // Important Macro
 #define Size(x) (sizeof(x) / sizeof((x)[0]))
